@@ -1,0 +1,10 @@
+{
+	"version": 1,
+	"skills": {
+		"my-skill": {
+			"source": "npm-package",
+			"sourceType": "node_modules",
+			"computedHash": "abc123"
+		}
+	}
+}

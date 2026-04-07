@@ -1,0 +1,15 @@
+{
+	"version": 1,
+	"skills": {
+		"alpha-skill": {
+			"source": "a",
+			"sourceType": "github",
+			"computedHash": "a"
+		},
+		"zebra-skill": {
+			"source": "z",
+			"sourceType": "github",
+			"computedHash": "z"
+		}
+	}
+}

@@ -1,0 +1,27 @@
+# EditorConfig - using hard tabs for all files (aligned with prettier/rustfmt)
+# https://editorconfig.org
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = tab
+indent_size = 4
+tab_width = 4
+max_line_length = 80
+
+# Keep repository text files on LF so Git, rustfmt, and prettier agree.
+[*.{rs,js,jsx,ts,tsx,mjs,cjs,json,md,css,html,toml,yml,yaml}]
+end_of_line = lf
+
+# JavaScript/TypeScript
+[*.{js,jsx,ts,tsx,mjs,cjs}]
+quote_type = double
+
+# Shell scripts
+[*.{sh,bash,zsh}]
+indent_style = tab
+indent_size = 4

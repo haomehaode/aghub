@@ -1,0 +1,76 @@
+{
+	"$schema": "https://schema.tauri.app/config/2",
+	"productName": "AgentHub",
+	"version": "1.0.3",
+	"identifier": "com.akrc.aghub",
+	"build": {
+		"beforeDevCommand": "bun run dev",
+		"devUrl": "http://localhost:1420",
+		"beforeBuildCommand": "bun run build",
+		"frontendDist": "../dist"
+	},
+	"app": {
+		"windows": [
+			{
+				"title": "AgentHub",
+				"width": 1200,
+				"height": 800,
+				"minWidth": 1024,
+				"minHeight": 600,
+				"decorations": true,
+				"hiddenTitle": true,
+				"titleBarStyle": "Overlay",
+				"trafficLightPosition": {
+					"x": 16,
+					"y": 18
+				}
+			}
+		],
+		"security": {
+			"csp": null
+		},
+		"withGlobalTauri": true
+	},
+	"bundle": {
+		"active": true,
+		"targets": "all",
+		"icon": [
+			"icons/32x32.png",
+			"icons/128x128.png",
+			"icons/128x128@2x.png",
+			"icons/icon.icns",
+			"icons/icon.ico"
+		],
+		"macOS": {
+			"dmg": {
+				"background": "icons/dmg/background.tiff",
+				"windowSize": {
+					"width": 650,
+					"height": 650
+				},
+				"appPosition": {
+					"x": 180,
+					"y": 385
+				},
+				"applicationFolderPosition": {
+					"x": 480,
+					"y": 385
+				}
+			}
+		},
+		"createUpdaterArtifacts": true
+	},
+	"plugins": {
+		"deep-link": {
+			"desktop": {
+				"schemes": ["aghub"]
+			}
+		},
+		"updater": {
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQ4OUQxMzVDMTc5NkVCMzgKUldRNDY1WVhYQk9kU0hMN3lGQnRXK0wzSDBXR1czdE1SRmpuK2VheUVnd2FMeVM1REFBZ1R4UksK",
+			"endpoints": [
+				"https://github.com/akarachen/aghub/releases/latest/download/latest.json"
+			]
+		}
+	}
+}

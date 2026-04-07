@@ -1,0 +1,593 @@
+import { StarIcon as StarIconOutline } from "@heroicons/react/24/outline";
+import {
+	ArrowPathIcon,
+	ChevronDownIcon,
+	ChevronUpIcon,
+	CodeBracketIcon,
+	GlobeAltIcon,
+	HashtagIcon,
+	LinkIcon,
+	MagnifyingGlassIcon,
+	PlusIcon,
+	StarIcon as StarIconSolid,
+	TrashIcon,
+} from "@heroicons/react/24/solid";
+import { Accordion, Button, Card, Chip, Tooltip } from "@heroui/react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { siGithub } from "simple-icons";
+import { useLocation } from "wouter";
+import { useAgentAvailability } from "../hooks/use-agent-availability";
+import { useApi } from "../hooks/use-api";
+import { useFavorites } from "../hooks/use-favorites";
+import { useCurrentCodeEditor } from "../hooks/use-integrations";
+import { cn } from "../lib/utils";
+import { openWithEditorMutationOptions } from "../requests/integrations";
+import {
+	globalSkillLockQueryOptions,
+	openSkillFolderMutationOptions,
+	projectSkillLockQueryOptions,
+	skillContentQueryOptions,
+	skillTreeQueryOptions,
+} from "../requests/skills";
+import { ManageSkillAgentsDialog } from "./manage-skill-agents-dialog";
+import {
+	DeleteSkillDialog,
+	DeleteSkillLocationDialog,
+} from "./skill-detail-dialogs";
+import {
+	buildLocationGroups,
+	countTreeNodes,
+	hasSupplementarySkillFiles,
+	type LocationGroup,
+	type SkillGroup,
+} from "./skill-detail-helpers";
+import { LocationRow, SkillTree } from "./skill-detail-views";
+import { SyncGithubSkillDialog } from "./sync-github-skill-dialog";
+import { TransferDialog } from "./transfer-dialog";
+
+interface SkillDetailProps {
+	group: SkillGroup;
+	projectPath?: string;
+}
+
+const GITHUB_PREFIX_REGEX = /^github\//;
+
+export function SkillDetail({ group, projectPath }: SkillDetailProps) {
+	const { t } = useTranslation();
+	const [, setLocation] = useLocation();
+	const { allAgents } = useAgentAvailability();
+	const api = useApi();
+
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [locationToDelete, setLocationToDelete] =
+		useState<LocationGroup | null>(null);
+	const [showAllLocations, setShowAllLocations] = useState(false);
+	const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+	const [manageDialogOpen, setManageDialogOpen] = useState(false);
+	const [syncDialogOpen, setSyncDialogOpen] = useState(false);
+
+	const { isSkillStarred, toggleSkillStar } = useFavorites();
+	const isStarred = isSkillStarred(group.items[0].name);
+	const { selectedEditor } = useCurrentCodeEditor();
+
+	const skill = group.items[0];
+	const primaryScope = skill.source ?? "global";
+	const trimmedSkillName = skill.name.trim();
+	const canSearchSkillsSh = trimmedSkillName.length >= 2;
+
+	const handleSearchSkillsSh = () => {
+		if (!canSearchSkillsSh) {
+			return;
+		}
+
+		setLocation(
+			`/skills-sh/search?q=${encodeURIComponent(trimmedSkillName)}`,
+		);
+	};
+
+	const openFolderMutation = useMutation(
+		openSkillFolderMutationOptions({ api }),
+	);
+
+	const openInEditorMutation = useMutation(
+		openWithEditorMutationOptions({ api }),
+	);
+
+	const { data: globalLock } = useQuery({
+		...globalSkillLockQueryOptions({ api }),
+	});
+
+	const { data: projectLock } = useQuery({
+		...projectSkillLockQueryOptions({ api, projectPath }),
+	});
+
+	const { data: skillContent } = useQuery({
+		...skillContentQueryOptions({
+			api,
+			path: skill.source_path ?? undefined,
+		}),
+	});
+
+	const { data: skillTree } = useQuery({
+		...skillTreeQueryOptions({
+			api,
+			path: skill.source_path ?? undefined,
+		}),
+	});
+
+	const currentSkillSource = useMemo(() => {
+		const skillItem = group.items[0];
+		if (skillItem.source === "global") {
+			const entry = globalLock?.skills.find((s) => s.name === skill.name);
+			if (entry) {
+				return {
+					source: entry.source,
+					sourceType: entry.sourceType,
+					hash: entry.skillFolderHash,
+					sourceUrl: entry.sourceUrl,
+					skillPath: entry.skillPath ?? null,
+				};
+			}
+		} else if (skillItem.source === "project") {
+			const entry = projectLock?.skills.find(
+				(s) => s.name === skill.name,
+			);
+			if (entry) {
+				return {
+					source: entry.source,
+					sourceType: entry.sourceType,
+					hash: entry.computedHash,
+				};
+			}
+		}
+
+		return null;
+	}, [globalLock, group.items, projectLock, skill.name]);
+
+	const sourceUrl = useMemo(() => {
+		if (!currentSkillSource) {
+			return null;
+		}
+
+		if (currentSkillSource.sourceUrl) {
+			return currentSkillSource.sourceUrl;
+		}
+
+		if (
+			currentSkillSource.sourceType === "github" &&
+			currentSkillSource.source
+		) {
+			const path = currentSkillSource.source.replace(
+				GITHUB_PREFIX_REGEX,
+				"",
+			);
+			return `https://github.com/${path}`;
+		}
+
+		return null;
+	}, [currentSkillSource]);
+
+	const allLocationGroups = useMemo(
+		() => buildLocationGroups(group.items, allAgents),
+		[group.items, allAgents],
+	);
+
+	const displayedLocations =
+		showAllLocations || allLocationGroups.length <= 3
+			? allLocationGroups
+			: allLocationGroups.slice(0, 2);
+	const hasMoreLocations = allLocationGroups.length > 3;
+	const hiddenLocationCount = allLocationGroups.length - 2;
+	const resourceCount = useMemo(
+		() => (skillTree ? countTreeNodes(skillTree) : 0),
+		[skillTree],
+	);
+	const hasSupplementaryFiles = useMemo(
+		() => (skillTree ? hasSupplementarySkillFiles(skillTree) : false),
+		[skillTree],
+	);
+
+	return (
+		<>
+			<div className="h-full overflow-y-auto">
+				<div className="w-full space-y-4 p-4 sm:p-6">
+					<Card>
+						<Card.Header className="flex flex-row items-start justify-between gap-3">
+							<div className="min-w-0 flex-1">
+								<h2 className="text-xl font-semibold text-foreground truncate">
+									{skill.name}
+								</h2>
+								{skill.description && (
+									<Card.Description className="mt-2">
+										{skill.description}
+									</Card.Description>
+								)}
+							</div>
+							<div className="flex items-center gap-2">
+								<Tooltip delay={0}>
+									<Button
+										isIconOnly
+										variant="ghost"
+										size="md"
+										className="text-muted min-w-[44px] min-h-[44px] hover:text-foreground"
+										aria-label={t("searchOnSkillsSh")}
+										isDisabled={!canSearchSkillsSh}
+										onPress={handleSearchSkillsSh}
+									>
+										<MagnifyingGlassIcon className="size-5" />
+									</Button>
+									<Tooltip.Content>
+										{t("searchOnSkillsSh")}
+									</Tooltip.Content>
+								</Tooltip>
+								<Tooltip delay={0}>
+									<Button
+										isIconOnly
+										variant="ghost"
+										size="md"
+										className={cn(
+											"text-muted min-w-[44px] min-h-[44px] hover:text-warning",
+											isStarred && "text-warning",
+										)}
+										aria-label={
+											isStarred
+												? t("unstarSkill")
+												: t("starSkill")
+										}
+										onPress={() =>
+											toggleSkillStar(skill.name)
+										}
+									>
+										{isStarred ? (
+											<StarIconSolid className="size-5" />
+										) : (
+											<StarIconOutline className="size-5" />
+										)}
+									</Button>
+									<Tooltip.Content>
+										{isStarred
+											? t("unstarSkill")
+											: t("starSkill")}
+									</Tooltip.Content>
+								</Tooltip>
+								<Tooltip delay={0}>
+									<Button
+										isIconOnly
+										variant="ghost"
+										size="md"
+										className="text-muted hover:text-danger min-w-[44px] min-h-[44px]"
+										aria-label={t("deleteSkill")}
+										onPress={() =>
+											setDeleteDialogOpen(true)
+										}
+									>
+										<TrashIcon className="size-4" />
+									</Button>
+									<Tooltip.Content>
+										{t("deleteSkill")}
+									</Tooltip.Content>
+								</Tooltip>
+							</div>
+						</Card.Header>
+
+						<Card.Content className="flex flex-col gap-6">
+							{skill.tools.length > 0 && (
+								<div className="space-y-3">
+									<h3 className="text-xs font-medium tracking-wider text-muted uppercase">
+										{t("tools")} ({skill.tools.length})
+									</h3>
+									<div className="flex flex-wrap gap-1.5">
+										{skill.tools.map((tool) => (
+											<Chip
+												key={tool}
+												size="sm"
+												variant="soft"
+											>
+												{tool}
+											</Chip>
+										))}
+									</div>
+								</div>
+							)}
+
+							{allLocationGroups.length > 0 && (
+								<div className="space-y-3">
+									<h3 className="text-xs font-medium tracking-wider text-muted uppercase">
+										{t("locations")} (
+										{allLocationGroups.length})
+									</h3>
+									<div className="space-y-1.5">
+										{displayedLocations.map(
+											(locationGroup) => (
+												<LocationRow
+													key={locationGroup.key}
+													group={locationGroup}
+													onDelete={() =>
+														setLocationToDelete(
+															locationGroup,
+														)
+													}
+													onEditFolder={() =>
+														openInEditorMutation.mutate(
+															{
+																path: locationGroup.sourcePath,
+																editor: selectedEditor!,
+															},
+														)
+													}
+													onOpenFolder={() =>
+														openFolderMutation.mutate(
+															locationGroup.sourcePath,
+														)
+													}
+												/>
+											),
+										)}
+									</div>
+									{hasMoreLocations && (
+										<button
+											type="button"
+											onClick={() =>
+												setShowAllLocations(
+													!showAllLocations,
+												)
+											}
+											className="
+												mt-2 flex items-center gap-1 text-xs text-muted
+												transition-colors hover:text-foreground
+											"
+										>
+											{showAllLocations ? (
+												<>
+													<ChevronUpIcon className="size-3.5" />
+													<span>{t("showLess")}</span>
+												</>
+											) : (
+												<>
+													<ChevronDownIcon className="size-3.5" />
+													<span>
+														{t("showMore", {
+															count: hiddenLocationCount,
+														})}
+													</span>
+												</>
+											)}
+										</button>
+									)}
+								</div>
+							)}
+
+							{currentSkillSource && (
+								<div className="space-y-3">
+									<h3 className="text-xs font-medium tracking-wider text-muted uppercase">
+										{t("installedFrom")}
+									</h3>
+									<div className="flex items-center justify-between gap-3 rounded-lg bg-surface-secondary px-3 py-2">
+										<div className="min-w-0 flex-1">
+											<div className="flex items-center gap-1.5">
+												{currentSkillSource.sourceType.toLowerCase() ===
+												"github" ? (
+													<svg
+														role="img"
+														className="size-3.5 shrink-0 text-muted"
+														viewBox="0 0 24 24"
+														fill="currentColor"
+													>
+														<path
+															d={siGithub.path}
+														/>
+													</svg>
+												) : (
+													<GlobeAltIcon className="size-3.5 shrink-0 text-muted" />
+												)}
+												<span className="min-w-0 truncate text-sm text-foreground">
+													{currentSkillSource.source}
+												</span>
+											</div>
+											<div className="mt-1 flex items-center text-xs text-muted">
+												<span className="font-mono">
+													<HashtagIcon className="inline size-3" />
+													{currentSkillSource.hash.slice(
+														0,
+														8,
+													)}
+												</span>
+											</div>
+										</div>
+										{sourceUrl && (
+											<div className="flex shrink-0 items-center gap-1">
+												<Tooltip delay={0}>
+													<Button
+														isIconOnly
+														variant="ghost"
+														size="sm"
+														className="size-8 text-muted"
+														aria-label={t(
+															"syncFromSource",
+														)}
+														onPress={() =>
+															setSyncDialogOpen(
+																true,
+															)
+														}
+													>
+														<ArrowPathIcon className="size-4" />
+													</Button>
+													<Tooltip.Content>
+														{t("syncFromSource")}
+													</Tooltip.Content>
+												</Tooltip>
+												<Tooltip delay={0}>
+													<Button
+														isIconOnly
+														variant="ghost"
+														size="sm"
+														className="size-8 text-muted"
+														aria-label={t(
+															"openInBrowser",
+														)}
+														onPress={() =>
+															openUrl(sourceUrl)
+														}
+													>
+														<LinkIcon className="size-4" />
+													</Button>
+													<Tooltip.Content>
+														{t("openInBrowser")}
+													</Tooltip.Content>
+												</Tooltip>
+											</div>
+										)}
+									</div>
+								</div>
+							)}
+
+							<Card.Footer className="pt-4 border-t border-separator flex flex-wrap gap-3">
+								<Button
+									variant="secondary"
+									onPress={() => setTransferDialogOpen(true)}
+								>
+									<PlusIcon className="size-4" />
+									{t("transfer")}
+								</Button>
+								<Button
+									variant="primary"
+									onPress={() => setManageDialogOpen(true)}
+								>
+									<PlusIcon className="size-4" />
+									{t("addToAgent")}
+								</Button>
+							</Card.Footer>
+						</Card.Content>
+					</Card>
+
+					{skillContent && (
+						<Accordion variant="surface">
+							<Accordion.Item>
+								<Accordion.Heading>
+									<Accordion.Trigger>
+										{t("skillContent")}
+										<Accordion.Indicator>
+											<ChevronDownIcon className="size-4" />
+										</Accordion.Indicator>
+									</Accordion.Trigger>
+								</Accordion.Heading>
+								<Accordion.Panel>
+									<Accordion.Body>
+										<pre
+											role="article"
+											aria-label={t("skillContent")}
+											className="overflow-x-auto rounded-md bg-surface-secondary p-3 font-mono text-xs whitespace-pre-wrap text-foreground"
+										>
+											{skillContent}
+										</pre>
+									</Accordion.Body>
+								</Accordion.Panel>
+							</Accordion.Item>
+						</Accordion>
+					)}
+
+					{skillTree && hasSupplementaryFiles && (
+						<Accordion variant="surface">
+							<Accordion.Item>
+								<Accordion.Heading>
+									<Accordion.Trigger>
+										<div className="flex min-w-0 flex-1 flex-col items-start text-left">
+											<span>{t("skillFiles")}</span>
+											<span className="text-xs font-normal text-muted">
+												{t("skillFilesDescription", {
+													count: resourceCount,
+												})}
+											</span>
+										</div>
+										<Accordion.Indicator>
+											<ChevronDownIcon className="size-4" />
+										</Accordion.Indicator>
+									</Accordion.Trigger>
+								</Accordion.Heading>
+								<Accordion.Panel>
+									<Accordion.Body>
+										<div className="space-y-3">
+											{selectedEditor && (
+												<div className="flex justify-start">
+													<Button
+														variant="ghost"
+														size="sm"
+														onPress={() =>
+															openInEditorMutation.mutate(
+																{
+																	path: skillTree.path,
+																	editor: selectedEditor!,
+																},
+															)
+														}
+													>
+														<CodeBracketIcon className="size-4" />
+														{t("editInEditor")}
+													</Button>
+												</div>
+											)}
+											<SkillTree root={skillTree} />
+										</div>
+									</Accordion.Body>
+								</Accordion.Panel>
+							</Accordion.Item>
+						</Accordion>
+					)}
+				</div>
+			</div>
+
+			<DeleteSkillDialog
+				group={group}
+				isOpen={deleteDialogOpen}
+				onClose={() => setDeleteDialogOpen(false)}
+				projectPath={projectPath}
+			/>
+			<DeleteSkillLocationDialog
+				key={
+					locationToDelete
+						? `${skill.name}:${locationToDelete.key}`
+						: "delete-skill-location-dialog"
+				}
+				item={locationToDelete}
+				isOpen={locationToDelete !== null}
+				onClose={() => setLocationToDelete(null)}
+				projectPath={projectPath}
+				skillName={skill.name}
+			/>
+			<TransferDialog
+				isOpen={transferDialogOpen}
+				onClose={() => setTransferDialogOpen(false)}
+				resourceType="skill"
+				name={skill.name}
+				sourceAgent={skill.agent ?? "claude"}
+				sourceScope={primaryScope}
+				sourceProjectRoot={projectPath}
+			/>
+			<ManageSkillAgentsDialog
+				group={group}
+				isOpen={manageDialogOpen}
+				onClose={() => setManageDialogOpen(false)}
+				projectPath={projectPath}
+			/>
+			{sourceUrl && (
+				<SyncGithubSkillDialog
+					group={group}
+					sourceUrl={sourceUrl}
+					skillPath={
+						(currentSkillSource &&
+							"skillPath" in currentSkillSource &&
+							currentSkillSource.skillPath) ||
+						null
+					}
+					isOpen={syncDialogOpen}
+					onClose={() => setSyncDialogOpen(false)}
+					projectPath={projectPath}
+				/>
+			)}
+		</>
+	);
+}

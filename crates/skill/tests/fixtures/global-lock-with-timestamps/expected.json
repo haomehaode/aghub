@@ -1,0 +1,14 @@
+{
+	"version": 3,
+	"skills": {
+		"github-skill": {
+			"source": "owner/repo",
+			"sourceType": "github",
+			"sourceUrl": "https://github.com/owner/repo",
+			"skillPath": "skills/my-skill",
+			"skillFolderHash": "def456",
+			"installedAt": "2024-01-01T00:00:00.000Z",
+			"updatedAt": "2024-01-02T00:00:00.000Z"
+		}
+	}
+}
