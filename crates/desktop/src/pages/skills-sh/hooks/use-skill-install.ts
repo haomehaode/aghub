@@ -80,7 +80,9 @@ export function useSkillInstall() {
 		setInstallResults(pendingResults);
 
 		try {
-			if (selectedSkill.local_path) {
+			const isInternalGitMarketSkill =
+				selectedSkill.source.startsWith("local/");
+			if (selectedSkill.local_path && !isInternalGitMarketSkill) {
 				const projectPath = installToProject
 					? selectedProject?.path
 					: undefined;

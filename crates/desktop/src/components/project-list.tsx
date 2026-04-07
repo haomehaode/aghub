@@ -1,6 +1,6 @@
 import {
 	ChevronDownIcon,
-	ChevronUpIcon,
+	ChevronRightIcon,
 	EllipsisVerticalIcon,
 	FolderIcon,
 	PlusIcon,
@@ -77,7 +77,7 @@ export function ProjectList() {
 	const [isExpanded, setIsExpanded] = useState(true);
 	const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-	const ChevronIcon = isExpanded ? ChevronUpIcon : ChevronDownIcon;
+	const ChevronIcon = isExpanded ? ChevronDownIcon : ChevronRightIcon;
 
 	return (
 		<>

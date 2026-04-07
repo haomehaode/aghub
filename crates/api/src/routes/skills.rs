@@ -345,24 +345,32 @@ fn resolve_git_install_target_dir(
 fn install_git_skill_to_dir(
 	full_path: &std::path::Path,
 	target_dir: &std::path::Path,
-) -> Result<String, ApiError> {
-	let parsed = skill::parser::parse(full_path).map_err(|e| {
-		ApiError::new(
-			Status::BadRequest,
-			format!("Failed to parse skill: {e}"),
-			"SKILL_PARSE_FAILED",
-		)
-	})?;
-	let skill = convert_skill(parsed);
-	let safe_name = sanitize_name(&skill.name);
+) -> Result<(), ApiError> {
+	let parsed = skill::parser::parse(full_path).ok().map(convert_skill);
+	let fallback_name = full_path
+		.file_name()
+		.and_then(|n| n.to_str())
+		.unwrap_or("skill");
+	let install_name = parsed
+		.as_ref()
+		.map(|s| s.name.as_str())
+		.unwrap_or(fallback_name);
+	let safe_name = sanitize_name(install_name);
 	let dest_root = target_dir.join(&safe_name);
 
 	if !dest_root.exists() {
 		let source_root = get_skill_root(full_path.to_path_buf());
+		if !source_root.exists() {
+			return Err(ApiError::new(
+				Status::NotFound,
+				format!("Skill source path not found: {}", source_root.display()),
+				"SKILL_PATH_NOT_FOUND",
+			));
+		}
 		copy_dir_recursive(&source_root, &dest_root)?;
 	}
 
-	Ok(skill.name)
+	Ok(())
 }
 
 fn install_local_git_skill(
@@ -387,30 +395,7 @@ fn install_local_git_skill(
 		})?;
 
 	let temp_dir = clone_internal_repo(&repo_url)?;
-
-	let scan_options = skill::scan::ScanOptions {
-		max_depth: 16,
-		full_depth: true,
-		respect_gitignore: true,
-	};
-
 	let repo_root = temp_dir.path().to_path_buf();
-	let skill_paths = skill::scan::scan_skills(&repo_root, scan_options, vec![])
-		.map_err(|e| {
-			ApiError::new(
-				Status::InternalServerError,
-				format!("Failed to scan cloned skills repository: {e}"),
-				"LOCAL_SKILLS_SCAN_FAILED",
-			)
-		})?;
-
-	let mut by_name: HashMap<String, std::path::PathBuf> = HashMap::new();
-	for path in skill_paths {
-		let Ok(parsed) = skill::parser::parse(&path) else {
-			continue;
-		};
-		by_name.entry(parsed.name).or_insert(path);
-	}
 
 	let resource_scope = match req.scope.as_str() {
 		"global" => ResourceScope::GlobalOnly,
@@ -436,37 +421,100 @@ fn install_local_git_skill(
 		logs.push(format!("agent '{agent}' skipped: {reason}"));
 	}
 
-	let selected: Vec<String> = if req.install_all.unwrap_or(false) {
-		by_name.keys().cloned().collect()
-	} else {
-		req.skills.clone()
-	};
+	let mut selected: Vec<(String, std::path::PathBuf)> = Vec::new();
+	let mut missing_skills: Vec<String> = Vec::new();
+
+	// Fast path: installing a single skill from `local/<relative-path>` should
+	// not scan the entire repository tree again.
+	if !req.install_all.unwrap_or(false) && req.skills.len() == 1 {
+		if let Some(source_rel) = req
+			.source
+			.strip_prefix("local/")
+			.map(str::trim)
+			.filter(|s| !s.is_empty())
+		{
+			let candidate = repo_root.join(source_rel);
+			if candidate.exists() {
+				selected.push((req.skills[0].clone(), candidate));
+			}
+		}
+	}
 
 	if selected.is_empty() {
+		let scan_options = skill::scan::ScanOptions {
+			max_depth: 16,
+			full_depth: true,
+			respect_gitignore: true,
+		};
+
+		let skill_paths =
+			skill::scan::scan_skills(&repo_root, scan_options, vec![]).map_err(
+				|e| {
+					ApiError::new(
+						Status::InternalServerError,
+						format!("Failed to scan cloned skills repository: {e}"),
+						"LOCAL_SKILLS_SCAN_FAILED",
+					)
+				},
+			)?;
+
+		let mut by_name: HashMap<String, std::path::PathBuf> = HashMap::new();
+		for path in skill_paths {
+			let Ok(parsed) = skill::parser::parse(&path) else {
+				continue;
+			};
+			by_name.entry(parsed.name).or_insert(path);
+		}
+
+		if req.install_all.unwrap_or(false) {
+			selected = by_name.into_iter().collect();
+		} else {
+			for skill_name in &req.skills {
+				if let Some(full_path) = by_name.get(skill_name) {
+					selected.push((skill_name.clone(), full_path.clone()));
+				} else {
+					missing_skills.push(skill_name.clone());
+				}
+			}
+		}
+	}
+
+	if selected.is_empty() {
+		let mut hints = Vec::new();
+		if let Some(rel) = req.source.strip_prefix("local/") {
+			hints.push(format!("source path in request: {rel}"));
+			hints.push(format!(
+				"resolved candidate path: {}",
+				repo_root.join(rel).display()
+			));
+		}
+		if !missing_skills.is_empty() {
+			hints.push(format!(
+				"requested skills not found in cloned repo: {}",
+				missing_skills.join(", ")
+			));
+		}
+		let details = if hints.is_empty() {
+			"No skills selected for installation".to_string()
+		} else {
+			format!("No skills selected for installation ({})", hints.join("; "))
+		};
 		return Ok(InstallSkillResponse {
 			success: false,
 			stdout: String::new(),
-			stderr: "No skills selected for installation".to_string(),
+			stderr: details,
 			exit_code: 1,
 		});
 	}
 
 	let mut had_error = false;
-	for skill_name in selected {
-		let Some(full_path) = by_name.get(&skill_name) else {
-			had_error = true;
-			logs.push(format!(
-				"skill '{skill_name}' not found in repository {repo_url}"
-			));
-			continue;
-		};
-
+	for (skill_name, full_path) in selected {
 		for (target_dir, agents) in &dir_groups {
-			match install_git_skill_to_dir(full_path, target_dir) {
-				Ok(installed_name) => {
+			match install_git_skill_to_dir(&full_path, target_dir) {
+				Ok(()) => {
 					for (agent_str, _) in agents {
 						logs.push(format!(
-							"installed '{installed_name}' for agent '{agent_str}'"
+							"installed '{skill_name}' for agent '{agent_str}'"
 						));
 					}
 				}
@@ -1313,10 +1361,14 @@ pub async fn git_install_skills(
 
 		for (target_dir, agents) in &dir_groups {
 			match install_git_skill_to_dir(&full_path, target_dir) {
-				Ok(skill_name) => {
+				Ok(()) => {
+					let installed_name = full_path
+						.file_name()
+						.and_then(|n| n.to_str())
+						.unwrap_or(skill_path);
 					for (agent_str, _) in agents {
 						results.push(GitInstallResultEntry {
-							name: skill_name.clone(),
+							name: installed_name.to_string(),
 							agent: agent_str.clone(),
 							success: true,
 							error: None,
@@ -1465,13 +1517,13 @@ mod tests {
 		let result =
 			install_git_skill_to_dir(&source_dir.join("SKILL.md"), &target_dir)
 				.unwrap_or_else(|e| panic!("{}", e.body.error));
-		assert_eq!(result, "hello-skill");
+		assert_eq!(result, ());
 		assert!(target_dir.join("hello-skill/SKILL.md").exists());
 
 		let second =
 			install_git_skill_to_dir(&source_dir.join("SKILL.md"), &target_dir)
 				.unwrap_or_else(|e| panic!("{}", e.body.error));
-		assert_eq!(second, "hello-skill");
+		assert_eq!(second, ());
 		assert!(target_dir.join("hello-skill/SKILL.md").exists());
 	}
 
