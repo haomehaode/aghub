@@ -40,14 +40,17 @@ export function useCurrentCodeEditor() {
 
 	const setCurrentEditor = useCallback(
 		async (editor: CodeEditorType | undefined) => {
-			const nextPreferences = { codeEditor: editor };
+			const nextPreferences = {
+				...(preferences ?? {}),
+				codeEditor: editor,
+			};
 			queryClient.setQueryData(
 				[INTEGRATION_PREFERENCES_KEY],
 				nextPreferences,
 			);
 			await saveIntegrationPreferences(nextPreferences);
 		},
-		[queryClient],
+		[queryClient, preferences],
 	);
 
 	return {

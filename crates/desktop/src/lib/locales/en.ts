@@ -219,6 +219,10 @@ export default {
 	openFolder: "Open folder",
 	openInBrowser: "View source",
 	editInEditor: "Edit in editor",
+	selectCodeEditorFirst:
+		"Please choose a code editor first in Settings > Integrations.",
+	openEditorFailed: "Failed to open in editor",
+	openEditorTriggered: "Open request sent to editor",
 	skillFiles: "Files",
 	skillFilesDescription: "{{count}} items available in this skill bundle",
 	createSkill: "Create Skill",

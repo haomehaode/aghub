@@ -20,13 +20,18 @@ pub async fn open_with_editor(
 	request: Json<OpenWithEditorRequest>,
 ) -> Result<(), String> {
 	let req = request.into_inner();
+	let detected_path = ToolInfoDto::from(&req.editor).path;
+	let cmd = detected_path.unwrap_or_else(|| req.editor.cli_command().to_string());
 
-	match Command::new(req.editor.cli_command())
+	match Command::new(&cmd)
 		.arg(&req.path)
 		.spawn()
 	{
 		Ok(_) => Ok(()),
-		Err(e) => Err(format!("Failed to open editor: {e}")),
+		Err(e) => Err(format!(
+			"Failed to open editor '{cmd}' with path '{}': {e}",
+			req.path
+		)),
 	}
 }
 

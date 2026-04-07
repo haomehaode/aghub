@@ -12,7 +12,7 @@ import {
 	StarIcon as StarIconSolid,
 	TrashIcon,
 } from "@heroicons/react/24/solid";
-import { Accordion, Button, Card, Chip, Tooltip } from "@heroui/react";
+import { Accordion, Button, Card, Chip, Tooltip, toast } from "@heroui/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useMemo, useState } from "react";
@@ -92,9 +92,19 @@ export function SkillDetail({ group, projectPath }: SkillDetailProps) {
 		openSkillFolderMutationOptions({ api }),
 	);
 
-	const openInEditorMutation = useMutation(
-		openWithEditorMutationOptions({ api }),
-	);
+	const openInEditorMutation = useMutation({
+		...openWithEditorMutationOptions({ api }),
+		onSuccess: () => {
+			toast.success(t("openEditorTriggered"));
+		},
+		onError: (error) => {
+			toast.danger(
+				error instanceof Error
+					? error.message
+					: t("openEditorFailed"),
+			);
+		},
+	});
 
 	const { data: globalLock } = useQuery({
 		...globalSkillLockQueryOptions({ api }),
@@ -189,6 +199,17 @@ export function SkillDetail({ group, projectPath }: SkillDetailProps) {
 		() => (skillTree ? hasSupplementarySkillFiles(skillTree) : false),
 		[skillTree],
 	);
+
+	const handleEditInEditor = (path: string) => {
+		if (!selectedEditor) {
+			toast.warning(t("selectCodeEditorFirst"));
+			return;
+		}
+		openInEditorMutation.mutate({
+			path,
+			editor: selectedEditor,
+		});
+	};
 
 	return (
 		<>
@@ -311,11 +332,8 @@ export function SkillDetail({ group, projectPath }: SkillDetailProps) {
 														)
 													}
 													onEditFolder={() =>
-														openInEditorMutation.mutate(
-															{
-																path: locationGroup.sourcePath,
-																editor: selectedEditor!,
-															},
+														handleEditInEditor(
+															locationGroup.sourcePath,
 														)
 													}
 													onOpenFolder={() =>
@@ -517,11 +535,8 @@ export function SkillDetail({ group, projectPath }: SkillDetailProps) {
 														variant="ghost"
 														size="sm"
 														onPress={() =>
-															openInEditorMutation.mutate(
-																{
-																	path: skillTree.path,
-																	editor: selectedEditor!,
-																},
+															handleEditInEditor(
+																skillTree.path,
 															)
 														}
 													>
