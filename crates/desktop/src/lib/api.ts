@@ -21,6 +21,7 @@ import type {
 	ImportSkillRequest,
 	InstallSkillRequest,
 	InstallSkillResponse,
+	MarketMcp,
 	MarketSkill,
 	MarketSkillSummary,
 	McpResponse,
@@ -432,6 +433,19 @@ export function createApi(baseUrl: string) {
 					.get("skills-market/skill-summary", {
 						searchParams: { source, slug },
 					})
+					.json();
+			},
+			mcpSearch(
+				q: string,
+				limit?: number,
+				source: "registry" | "local" = "registry",
+				repoUrl?: string,
+			): Promise<MarketMcp[]> {
+				const searchParams: Record<string, string> = { q, source };
+				if (limit) searchParams.limit = String(limit);
+				if (repoUrl?.trim()) searchParams.repo_url = repoUrl.trim();
+				return client
+					.get("mcp-market/search", { searchParams })
 					.json();
 			},
 		},

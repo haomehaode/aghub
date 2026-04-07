@@ -1,29 +1,23 @@
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
-import {
-	Button,
-	SearchField,
-	Tabs,
-	Tooltip,
-} from "@heroui/react";
+import { Button, SearchField, Tabs, Tooltip } from "@heroui/react";
 import { useTranslation } from "react-i18next";
 
 type Size = "large" | "compact";
 
-export type MarketSearchSource = "skills-sh" | "local";
+export type McpMarketSearchSource = "registry" | "local";
 
-interface SkillsHeaderProps {
+interface McpHeaderProps {
 	size: Size;
-	/** When true, tabs + search stack centered (market landing). */
 	centered?: boolean;
-	marketSource: MarketSearchSource;
-	onMarketSourceChange: (source: MarketSearchSource) => void;
+	marketSource: McpMarketSearchSource;
+	onMarketSourceChange: (source: McpMarketSearchSource) => void;
 	searchQuery: string;
 	onSearchQueryChange: (value: string) => void;
 	onSearch: () => void;
 	showSearchButton?: boolean;
 }
 
-export function SkillsHeader({
+export function McpHeader({
 	size,
 	centered = false,
 	marketSource,
@@ -32,7 +26,7 @@ export function SkillsHeader({
 	onSearchQueryChange,
 	onSearch,
 	showSearchButton = true,
-}: SkillsHeaderProps) {
+}: McpHeaderProps) {
 	const { t } = useTranslation();
 
 	const isLarge = size === "large";
@@ -41,8 +35,8 @@ export function SkillsHeader({
 
 	const searchPlaceholder =
 		marketSource === "local"
-			? t("searchInternalMarketPlaceholder")
-			: t("searchMarketSkillsPlaceholder");
+			? t("searchInternalMcpMarketPlaceholder")
+			: t("searchPublicMcpMarketPlaceholder");
 
 	return (
 		<div
@@ -54,23 +48,26 @@ export function SkillsHeader({
 				<Tabs
 					selectedKey={marketSource}
 					onSelectionChange={(key) => {
-						onMarketSourceChange(key as MarketSearchSource);
+						onMarketSourceChange(key as McpMarketSearchSource);
 					}}
 				>
 					<Tabs.ListContainer className="inline-flex">
 						<Tabs.List
-							aria-label={t("marketSearchSource")}
+							aria-label={t("mcpMarketSearchSource")}
 							className="w-auto gap-0"
 						>
 							<Tabs.Tab
-								id="skills-sh"
+								id="registry"
 								className="text-sm whitespace-nowrap"
 							>
-								{t("skillsSh")}
+								{t("mcpMarketRegistry")}
 								<Tabs.Indicator />
 							</Tabs.Tab>
-							<Tabs.Tab id="local" className="text-sm">
-								{t("marketInternalSkills")}
+							<Tabs.Tab
+								id="local"
+								className="text-sm whitespace-nowrap"
+							>
+								{t("mcpMarketInternal")}
 								<Tabs.Indicator />
 							</Tabs.Tab>
 						</Tabs.List>
@@ -78,15 +75,15 @@ export function SkillsHeader({
 				</Tabs>
 				<Tooltip delay={0}>
 					<Tooltip.Trigger
-						aria-label={t("marketSourceHint")}
+						aria-label={t("mcpMarketSourceHint")}
 						className="text-muted hover:text-fg transition-colors"
 					>
 						<InformationCircleIcon className="size-4" />
 					</Tooltip.Trigger>
 					<Tooltip.Content className="max-w-xs">
 						{marketSource === "local"
-							? t("dataFromLocalSkillsRepo")
-							: t("dataFromSkillsSh")}
+							? t("mcpMarketDataFromInternalRepo")
+							: t("mcpMarketDataFromRegistry")}
 					</Tooltip.Content>
 				</Tooltip>
 			</div>
@@ -100,14 +97,12 @@ export function SkillsHeader({
 								onSearch();
 							}
 						}}
-						aria-label={t("searchMarketSkills")}
+						aria-label={t("searchMcpMarket")}
 						className="w-full"
 					>
 						<SearchField.Group>
 							<SearchField.SearchIcon />
-							<SearchField.Input
-								placeholder={searchPlaceholder}
-							/>
+							<SearchField.Input placeholder={searchPlaceholder} />
 							<SearchField.ClearButton />
 						</SearchField.Group>
 					</SearchField>
@@ -123,7 +118,7 @@ export function SkillsHeader({
 				</div>
 			)}
 			{showSearchButton && !centered && (
-				<div className="flex w-full min-w-0 flex-nowrap items-center gap-2 overflow-x-auto">
+				<div className="flex w-full min-w-0 flex-wrap items-center gap-2">
 					<SearchField
 						value={searchQuery}
 						onChange={onSearchQueryChange}
@@ -132,8 +127,8 @@ export function SkillsHeader({
 								onSearch();
 							}
 						}}
-						aria-label={t("searchMarketSkills")}
-						className="min-w-0 flex-1 max-w-2xl sm:min-w-[12rem]"
+						aria-label={t("searchMcpMarket")}
+						className="min-w-0 flex-1"
 					>
 						<SearchField.Group>
 							<SearchField.SearchIcon />

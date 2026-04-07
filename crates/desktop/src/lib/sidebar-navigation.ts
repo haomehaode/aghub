@@ -1,6 +1,7 @@
 import {
 	BookOpenIcon,
 	CpuChipIcon,
+	GlobeAltIcon,
 	ServerIcon,
 	SquaresPlusIcon,
 } from "@heroicons/react/24/solid";
@@ -46,6 +47,13 @@ const SIDEBAR_ITEM_DEFINITIONS: Record<SidebarItemId, SidebarItemDefinition> = {
 		href: "/skills-sh",
 		icon: SquaresPlusIcon,
 		tour: "nav-market",
+	},
+	mcpMarket: {
+		id: "mcpMarket",
+		labelKey: "mcpMarket",
+		href: "/mcp-market",
+		icon: GlobeAltIcon,
+		tour: "nav-mcp-market",
 	},
 	subAgents: {
 		id: "subAgents",

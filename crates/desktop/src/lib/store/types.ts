@@ -17,12 +17,15 @@ export interface Project {
 export interface IntegrationPreferences {
 	codeEditor?: CodeEditorType;
 	localSkillsRepoGitUrl?: string;
+	/** Git URL for internal MCP catalog files (`*.mcp.json`, `mcp-catalog.json`). */
+	localMcpRepoGitUrl?: string;
 }
 
 export const SIDEBAR_ITEM_IDS = [
 	"mcp",
 	"skills",
 	"skillsSh",
+	"mcpMarket",
 	"subAgents",
 ] as const;
 
@@ -33,7 +36,7 @@ export interface SidebarItemPreference {
 	visible: boolean;
 }
 
-export const CURRENT_VERSION = 6;
+export const CURRENT_VERSION = 7;
 
 export const DEFAULT_ONBOARDING_PROGRESS: OnboardingProgress = {
 	hasSeenWelcome: false,

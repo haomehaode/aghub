@@ -3,7 +3,8 @@ export default {
 	settings: "設定",
 	skills: "技能",
 	mcpServers: "MCP 伺服器",
-	skillsSh: "skills.sh",
+	skillsSh: "Skills 市場",
+	mcpMarket: "MCP 市集",
 	mcp: "MCP",
 	subAgents: "子代理",
 	subAgent: "子代理",
@@ -92,6 +93,11 @@ export default {
 		"用於本地來源技能的搜尋與安裝（支援 ssh:// 或 https:// 倉庫地址）",
 	localSkillsRepoSaved: "內部技能倉庫地址已儲存",
 	localSkillsRepoSaveFailed: "儲存內部技能倉庫地址失敗",
+	localMcpRepoGitUrl: "內部 MCP 目錄倉庫地址",
+	localMcpRepoGitUrlDescription:
+		"複製後掃描 *.mcp.json、mcp-catalog.json（transport 欄位與公開目錄相同）。支援 ssh:// 或 https://。",
+	localMcpRepoSaved: "內部 MCP 倉庫地址已儲存",
+	localMcpRepoSaveFailed: "儲存內部 MCP 倉庫地址失敗",
 
 	// Application
 	application: "關於",
@@ -426,6 +432,8 @@ export default {
 	skillSummaryEmpty: "暫無摘要，可在 skills.sh 查看完整介紹。",
 	skillSummaryError: "載入摘要失敗。",
 	openSkillsShPage: "在 skills.sh 開啟技能頁",
+	openGithubRepo: "在 GitHub 開啟",
+	mcpSummaryEmpty: "此 MCP 伺服器暫無簡介。",
 	installAllSkills: "安裝所有技能",
 	installAllSkillsDescription:
 		"安裝此來源中的所有技能，而不是選中的單一技能。",
@@ -450,7 +458,7 @@ export default {
 	searchToFindSkills: "搜尋以從 skills.sh 尋找技能",
 	poweredByVercel: "由 Vercel 提供支援",
 	dataFromSkillsSh: "資料來自 skills.sh",
-	marketInternalSkills: "內部",
+	marketInternalSkills: "內網 Git",
 	marketSearchSource: "技能搜尋來源",
 	marketSourceHint: "資料來源說明",
 	dataFromLocalSkillsRepo:
@@ -460,6 +468,23 @@ export default {
 	localMarketSearchError:
 		"無法搜尋內部技能。請先到 設定 > 整合 設定「內部技能倉庫地址」，" +
 		"或在 API 環境設定 AGHUB_LOCAL_SKILLS_REPO_GIT_URL。",
+
+	searchMcpMarket: "搜尋 MCP 目錄…",
+	searchPublicMcpMarketPlaceholder: "依名稱、簡介或作者篩選…",
+	searchInternalMcpMarketPlaceholder: "搜尋內部 MCP 目錄檔案…",
+	mcpMarketRegistry: "公開登錄檔",
+	mcpMarketInternal: "內網 Git",
+	mcpMarketSearchSource: "MCP 目錄來源",
+	mcpMarketSourceHint: "目錄來源說明",
+	mcpMarketDataFromRegistry:
+		"使用官方 MCP Registry（registry.modelcontextprotocol.io）。選用：在 API 環境設定 AGHUB_MCP_REGISTRY_URL 指向靜態 JSON 目錄以覆寫。",
+	mcpMarketDataFromInternalRepo:
+		"使用設定中的「內部 MCP 目錄倉庫」，或 AGHUB_LOCAL_MCP_REPO / AGHUB_LOCAL_MCP_REPO_GIT_URL。",
+	localMcpMarketSearchError:
+		"無法搜尋內部 MCP。請先到 設定 > 整合 設定「內部 MCP 目錄倉庫地址」。",
+	mcpMarketRegistryError:
+		"無法載入公開 MCP 目錄。請檢查網路後重試。",
+	installMcpServer: "安裝 MCP 伺服器",
 
 	// Projects
 	addProject: "新增專案",

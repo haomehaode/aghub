@@ -108,6 +108,7 @@ export function DeepLinkImportModal({
 					scope: variables.installToProject ? "project" : "global",
 					project_path: variables.selectedProject?.path ?? null,
 					install_all: false,
+					local_repo_git_url: null,
 				});
 
 				return pendingResults.map((result) => ({

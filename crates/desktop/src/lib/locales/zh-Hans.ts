@@ -3,7 +3,8 @@ export default {
 	settings: "设置",
 	skills: "技能",
 	mcpServers: "MCP 服务器",
-	skillsSh: "skills.sh",
+	skillsSh: "Skills 市场",
+	mcpMarket: "MCP 市场",
 	mcp: "MCP",
 	subAgents: "子代理",
 	subAgent: "子代理",
@@ -92,6 +93,11 @@ export default {
 		"用于本地来源技能的搜索与安装（支持 ssh:// 或 https:// 仓库地址）",
 	localSkillsRepoSaved: "内部技能仓库地址已保存",
 	localSkillsRepoSaveFailed: "保存内部技能仓库地址失败",
+	localMcpRepoGitUrl: "内部 MCP 目录仓库地址",
+	localMcpRepoGitUrlDescription:
+		"克隆后扫描 *.mcp.json、mcp-catalog.json（transport 字段与公开目录相同）。支持 ssh:// 或 https://。",
+	localMcpRepoSaved: "内部 MCP 仓库地址已保存",
+	localMcpRepoSaveFailed: "保存内部 MCP 仓库地址失败",
 
 	// Application
 	application: "关于",
@@ -426,6 +432,8 @@ export default {
 	skillSummaryEmpty: "暂无摘要，可在 skills.sh 查看完整介绍。",
 	skillSummaryError: "加载摘要失败。",
 	openSkillsShPage: "在 skills.sh 打开技能页",
+	openGithubRepo: "在 GitHub 打开",
+	mcpSummaryEmpty: "该 MCP 服务暂无简介。",
 	installAllSkills: "安装所有技能",
 	installAllSkillsDescription:
 		"安装此来源中的所有技能，而不是选中的单个技能。",
@@ -450,7 +458,7 @@ export default {
 	searchToFindSkills: "搜索以从 skills.sh 查找技能",
 	poweredByVercel: "由 Vercel 提供支持",
 	dataFromSkillsSh: "数据来自 skills.sh",
-	marketInternalSkills: "内部",
+	marketInternalSkills: "内网 Git",
 	marketSearchSource: "技能搜索来源",
 	marketSourceHint: "数据来源说明",
 	dataFromLocalSkillsRepo:
@@ -460,6 +468,23 @@ export default {
 	localMarketSearchError:
 		"无法搜索内部技能。请先到 设置 > 集成 配置“内部技能仓库地址”，" +
 		"或在 API 环境设置 AGHUB_LOCAL_SKILLS_REPO_GIT_URL。",
+
+	searchMcpMarket: "搜索 MCP 目录…",
+	searchPublicMcpMarketPlaceholder: "按名称、简介或作者筛选…",
+	searchInternalMcpMarketPlaceholder: "搜索内部 MCP 目录文件…",
+	mcpMarketRegistry: "官方 MCP",
+	mcpMarketInternal: "内网 Git",
+	mcpMarketSearchSource: "MCP 目录来源",
+	mcpMarketSourceHint: "目录来源说明",
+	mcpMarketDataFromRegistry:
+		"使用官方 MCP Registry（registry.modelcontextprotocol.io）。可选：在 API 环境设置 AGHUB_MCP_REGISTRY_URL 指向静态 JSON 目录以覆盖。",
+	mcpMarketDataFromInternalRepo:
+		"使用设置中的「内部 MCP 目录仓库」，或 AGHUB_LOCAL_MCP_REPO / AGHUB_LOCAL_MCP_REPO_GIT_URL。",
+	localMcpMarketSearchError:
+		"无法搜索内部 MCP。请先到 设置 > 集成 配置「内部 MCP 目录仓库地址」。",
+	mcpMarketRegistryError:
+		"无法加载公开 MCP 目录。请检查网络后重试。",
+	installMcpServer: "安装 MCP 服务",
 
 	// Projects
 	addProject: "添加项目",

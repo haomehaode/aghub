@@ -11,14 +11,6 @@ let activeAppMenu: Menu | null = null;
 
 export async function setupAppMenu(t: TFunction) {
 	try {
-		const aboutMenuItem = await MenuItem.new({
-			id: "about",
-			text: t("menu.about"),
-			action: () => {
-				emit("navigate", "/settings?tab=application");
-			},
-		});
-
 		const settingsMenuItem = await MenuItem.new({
 			id: "settings",
 			text: t("menu.settings"),
@@ -31,8 +23,6 @@ export async function setupAppMenu(t: TFunction) {
 		const appSubmenu = await Submenu.new({
 			text: t("menu.app"),
 			items: [
-				aboutMenuItem,
-				await PredefinedMenuItem.new({ item: "Separator" }),
 				settingsMenuItem,
 				await PredefinedMenuItem.new({ item: "Separator" }),
 				await PredefinedMenuItem.new({

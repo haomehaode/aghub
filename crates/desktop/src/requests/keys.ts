@@ -58,5 +58,18 @@ export const queryKeys = {
 			source: "skills-sh" | "local",
 			repoUrl?: string,
 		) => ["market", "search", query, source, repoUrl ?? null] as const,
+		mcpSearch: (
+			query: string,
+			source: "registry" | "local",
+			repoUrl?: string,
+		) =>
+			[
+				"market",
+				"mcp",
+				"search",
+				query,
+				source,
+				repoUrl ?? null,
+			] as const,
 	},
 };

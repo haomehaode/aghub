@@ -3,7 +3,8 @@ export default {
 	settings: "Settings",
 	skills: "Skills",
 	mcpServers: "MCP Servers",
-	skillsSh: "skills.sh",
+	skillsSh: "Skills Market",
+	mcpMarket: "MCP market",
 	mcp: "MCP",
 	subAgents: "Sub-agents",
 	subAgent: "Sub-agent",
@@ -96,6 +97,11 @@ export default {
 		"Used for local-source skill search and install (supports ssh:// or https:// repo URL).",
 	localSkillsRepoSaved: "Internal skills repository URL saved",
 	localSkillsRepoSaveFailed: "Failed to save internal skills repository URL",
+	localMcpRepoGitUrl: "Internal MCP catalog repository URL",
+	localMcpRepoGitUrlDescription:
+		"Git URL cloned to discover *.mcp.json and mcp-catalog.json files (same transport shape as the public catalog). Supports ssh:// or https://.",
+	localMcpRepoSaved: "Internal MCP repository URL saved",
+	localMcpRepoSaveFailed: "Failed to save internal MCP repository URL",
 
 	// Application
 	application: "About",
@@ -419,6 +425,8 @@ export default {
 		"No summary here. Open the skills.sh page for full details.",
 	skillSummaryError: "Could not load the summary.",
 	openSkillsShPage: "Open skill page on skills.sh",
+	openGithubRepo: "Open on GitHub",
+	mcpSummaryEmpty: "No description provided for this MCP server.",
 	installAllSkills: "Install All Skills",
 	installAllSkillsDescription:
 		"Install all skills from this source instead of the selected skill.",
@@ -459,6 +467,25 @@ export default {
 	localMarketSearchError:
 		"Could not search internal skills. Configure Internal skills repository URL in " +
 		"Settings > Integrations, or set AGHUB_LOCAL_SKILLS_REPO_GIT_URL.",
+
+	searchMcpMarket: "Search MCP catalog…",
+	searchPublicMcpMarketPlaceholder:
+		"Filter by name, description, or author…",
+	searchInternalMcpMarketPlaceholder:
+		"Search your internal MCP catalog files…",
+	mcpMarketRegistry: "Public registry",
+	mcpMarketInternal: "Internal git",
+	mcpMarketSearchSource: "MCP catalog source",
+	mcpMarketSourceHint: "Catalog source",
+	mcpMarketDataFromRegistry:
+		"Uses the official MCP Registry (registry.modelcontextprotocol.io). Optional override: set AGHUB_MCP_REGISTRY_URL on the API host for a static JSON catalog.",
+	mcpMarketDataFromInternalRepo:
+		"Uses Internal MCP catalog repository URL in Settings, or AGHUB_LOCAL_MCP_REPO / AGHUB_LOCAL_MCP_REPO_GIT_URL.",
+	localMcpMarketSearchError:
+		"Could not search internal MCP catalogs. Configure Internal MCP catalog repository URL in Settings > Integrations.",
+	mcpMarketRegistryError:
+		"Could not load the public MCP catalog. Check your network and try again.",
+	installMcpServer: "Install MCP server",
 
 	// MCP Detail
 	connection: "Connection",

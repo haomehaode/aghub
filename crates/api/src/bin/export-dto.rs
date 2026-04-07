@@ -18,6 +18,7 @@ use aghub_api::dto::{
 	},
 	market::{MarketSkill, MarketSkillSummary},
 	mcp::{CreateMcpRequest, McpResponse, TransportDto, UpdateMcpRequest},
+	mcp_market::MarketMcp,
 	skill::{
 		CreateSkillRequest, DeleteSkillByPathRequest,
 		DeleteSkillByPathResponse, GitInstallRequest, GitInstallResponse,
@@ -121,6 +122,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	export_type::<EditSkillFolderRequest>(&cfg)?;
 	export_type::<MarketSkill>(&cfg)?;
 	export_type::<MarketSkillSummary>(&cfg)?;
+	export_type::<MarketMcp>(&cfg)?;
 	export_type::<TransportDto>(&cfg)?;
 	export_type::<CreateMcpRequest>(&cfg)?;
 	export_type::<UpdateMcpRequest>(&cfg)?;

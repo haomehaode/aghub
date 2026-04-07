@@ -3,7 +3,6 @@ import { useQueryState } from "nuqs";
 import { useTranslation } from "react-i18next";
 import AgentsPanel from "./agents-panel";
 import AppearancePanel from "./appearance-panel";
-import ApplicationPanel from "./application-panel";
 import IntegrationsPanel from "./integrations-panel";
 
 export default function SettingsPage() {
@@ -43,10 +42,6 @@ export default function SettingsPage() {
 									{t("integrations")}
 									<Tabs.Indicator />
 								</Tabs.Tab>
-								<Tabs.Tab id="application">
-									{t("application")}
-									<Tabs.Indicator />
-								</Tabs.Tab>
 							</Tabs.List>
 						</Tabs.ListContainer>
 					</div>
@@ -63,9 +58,6 @@ export default function SettingsPage() {
 						<IntegrationsPanel />
 					</Tabs.Panel>
 
-					<Tabs.Panel id="application">
-						<ApplicationPanel />
-					</Tabs.Panel>
 				</Tabs>
 			</div>
 		</div>

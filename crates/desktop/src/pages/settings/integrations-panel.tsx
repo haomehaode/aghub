@@ -86,12 +86,17 @@ export default function IntegrationsPanel() {
 		queryFn: getIntegrationPreferences,
 	});
 	const [localSkillsRepoGitUrl, setLocalSkillsRepoGitUrl] = useState("");
+	const [localMcpRepoGitUrl, setLocalMcpRepoGitUrl] = useState("");
 
 	useEffect(() => {
 		setLocalSkillsRepoGitUrl(
 			integrationPreferences?.localSkillsRepoGitUrl ?? "",
 		);
-	}, [integrationPreferences?.localSkillsRepoGitUrl]);
+		setLocalMcpRepoGitUrl(integrationPreferences?.localMcpRepoGitUrl ?? "");
+	}, [
+		integrationPreferences?.localSkillsRepoGitUrl,
+		integrationPreferences?.localMcpRepoGitUrl,
+	]);
 
 	const { data: credentials = [], isLoading: isCredentialsLoading } =
 		useQuery({
@@ -139,6 +144,24 @@ export default function IntegrationsPanel() {
 		} catch (error) {
 			console.error("Failed to save local skills repository URL:", error);
 			toast.danger(t("localSkillsRepoSaveFailed"));
+		}
+	};
+
+	const handleSaveLocalMcpRepoGitUrl = async () => {
+		try {
+			const nextPreferences = {
+				...(integrationPreferences ?? {}),
+				localMcpRepoGitUrl: localMcpRepoGitUrl.trim(),
+			};
+			await saveIntegrationPreferences(nextPreferences);
+			queryClient.setQueryData(
+				["integration-preferences"],
+				nextPreferences,
+			);
+			toast.success(t("localMcpRepoSaved"));
+		} catch (error) {
+			console.error("Failed to save internal MCP repository URL:", error);
+			toast.danger(t("localMcpRepoSaveFailed"));
 		}
 	};
 
@@ -220,6 +243,32 @@ export default function IntegrationsPanel() {
 							placeholder='ssh://brow.src.corp.qihoo.net:29418/skills'
 						/>
 						<Button onPress={handleSaveLocalSkillsRepoGitUrl}>
+							{t("save")}
+						</Button>
+					</div>
+				</Card.Content>
+			</Card>
+
+			<Card className="p-4">
+				<Card.Content className="space-y-3">
+					<div className="space-y-0.5">
+						<span className="text-sm font-medium text-(--foreground)">
+							{t("localMcpRepoGitUrl")}
+						</span>
+						<span className="block text-xs text-muted">
+							{t("localMcpRepoGitUrlDescription")}
+						</span>
+					</div>
+					<div className="flex items-center gap-2">
+						<Input
+							variant="secondary"
+							value={localMcpRepoGitUrl}
+							onChange={(e) =>
+								setLocalMcpRepoGitUrl(e.target.value)
+							}
+							placeholder="ssh://git.example.com/mcp-catalog.git"
+						/>
+						<Button onPress={handleSaveLocalMcpRepoGitUrl}>
 							{t("save")}
 						</Button>
 					</div>

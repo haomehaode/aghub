@@ -3,6 +3,7 @@ pub mod catchers;
 pub mod credentials;
 pub mod integrations;
 pub mod market;
+pub mod mcp_market;
 pub mod mcps;
 pub mod skills;
 pub mod sub_agents;

@@ -25,6 +25,7 @@ export type { InstallScopeDto } from "./InstallScopeDto";
 export type { InstallSkillRequest } from "./InstallSkillRequest";
 export type { InstallSkillResponse } from "./InstallSkillResponse";
 export type { LocalSkillLockEntryResponse } from "./LocalSkillLockEntryResponse";
+export type { MarketMcp } from "./MarketMcp";
 export type { MarketSkill } from "./MarketSkill";
 export type { MarketSkillSummary } from "./MarketSkillSummary";
 export type { McpCapabilitiesDto } from "./McpCapabilitiesDto";

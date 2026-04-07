@@ -110,6 +110,7 @@ pub async fn start(options: ApiOptions) -> Result<(), rocket::Error> {
 				routes::agents::check_availability,
 				routes::market::search_skill_market,
 				routes::market::skill_market_summary,
+				routes::mcp_market::search_mcp_market,
 				routes::skills::list_all_agents_skills,
 				routes::skills::list_skills,
 				routes::skills::create_skill,

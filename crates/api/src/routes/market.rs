@@ -14,7 +14,7 @@ use tempfile::TempDir;
 const LOCAL_SKILLS_REPO_ENV: &str = "AGHUB_LOCAL_SKILLS_REPO";
 const LOCAL_SKILLS_REPO_GIT_URL_ENV: &str = "AGHUB_LOCAL_SKILLS_REPO_GIT_URL";
 
-fn clone_internal_repo(repo_url: &str) -> Result<TempDir, ApiError> {
+pub(crate) fn clone_internal_repo(repo_url: &str) -> Result<TempDir, ApiError> {
 	if repo_url.starts_with("ssh://") || repo_url.starts_with("git@") {
 		let temp_dir = tempfile::tempdir().map_err(|e| {
 			ApiError::new(

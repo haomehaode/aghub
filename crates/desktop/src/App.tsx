@@ -26,6 +26,8 @@ import CustomAgentsPage from "./pages/settings/custom-agents";
 import MCPServersPage from "./pages/settings/mcp-servers";
 import SkillsPage from "./pages/settings/skills";
 import SubAgentsPage from "./pages/settings/sub-agents";
+import McpMarketPage from "./pages/mcp-market";
+import McpMarketSearchPage from "./pages/mcp-market/search";
 import SkillsShPage from "./pages/skills-sh";
 import SkillsSearchPage from "./pages/skills-sh/search";
 import { AgentAvailabilityProvider } from "./providers/agent-availability";
@@ -217,6 +219,19 @@ function App() {
 											</ErrorBoundary>
 										</MainLayout>
 									</Route>
+									<Route path="/mcp-market/search">
+										<MainLayout>
+											<ErrorBoundary>
+												<Suspense
+													fallback={
+														<SkillsPageSkeleton />
+													}
+												>
+													<McpMarketSearchPage />
+												</Suspense>
+											</ErrorBoundary>
+										</MainLayout>
+									</Route>
 									<Route path="/skills-sh">
 										<MainLayout>
 											<ErrorBoundary>
@@ -226,6 +241,19 @@ function App() {
 													}
 												>
 													<SkillsShPage />
+												</Suspense>
+											</ErrorBoundary>
+										</MainLayout>
+									</Route>
+									<Route path="/mcp-market">
+										<MainLayout>
+											<ErrorBoundary>
+												<Suspense
+													fallback={
+														<SkillsPageSkeleton />
+													}
+												>
+													<McpMarketPage />
 												</Suspense>
 											</ErrorBoundary>
 										</MainLayout>
