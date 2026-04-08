@@ -95,7 +95,7 @@ export default {
 	localSkillsRepoSaveFailed: "保存内部技能仓库地址失败",
 	localMcpRepoGitUrl: "内部 MCP 目录仓库地址",
 	localMcpRepoGitUrlDescription:
-		"用于内部MCP目录的搜索与安装支持 ssh:// 或 https://。",
+		"用于内部MCP目录的搜索与安装（支持 ssh:// 或 https:// 仓库地址）",
 	localMcpRepoSaved: "内部 MCP 仓库地址已保存",
 	localMcpRepoSaveFailed: "保存内部 MCP 仓库地址失败",
 
