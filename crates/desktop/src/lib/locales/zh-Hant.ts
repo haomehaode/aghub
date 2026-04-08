@@ -90,12 +90,12 @@ export default {
 	codeEditorsDescription: "選擇用於開啟檔案的偏好程式碼編輯器",
 	localSkillsRepoGitUrl: "內部技能倉庫地址",
 	localSkillsRepoGitUrlDescription:
-		"用於本地來源技能的搜尋與安裝（支援 ssh:// 或 https:// 倉庫地址）",
+		"用於內部技能的搜尋與安裝（支援 ssh:// 或 https:// 倉庫地址）",
 	localSkillsRepoSaved: "內部技能倉庫地址已儲存",
 	localSkillsRepoSaveFailed: "儲存內部技能倉庫地址失敗",
 	localMcpRepoGitUrl: "內部 MCP 目錄倉庫地址",
 	localMcpRepoGitUrlDescription:
-		"複製後掃描 *.mcp.json、mcp-catalog.json（transport 欄位與公開目錄相同）。支援 ssh:// 或 https://。",
+		"用於內部 MCP 目錄的搜尋與安裝（支援 ssh:// 或 https:// 倉庫地址）",
 	localMcpRepoSaved: "內部 MCP 倉庫地址已儲存",
 	localMcpRepoSaveFailed: "儲存內部 MCP 倉庫地址失敗",
 
@@ -464,10 +464,7 @@ export default {
 	marketInternalSkills: "內網 Git",
 	marketSearchSource: "技能搜尋來源",
 	marketSourceHint: "資料來源說明",
-	dataFromLocalSkillsRepo:
-		"預設從設定頁的「內部技能倉庫地址」讀取；也相容環境變數 " +
-		"AGHUB_LOCAL_SKILLS_REPO / AGHUB_LOCAL_SKILLS_REPO_GIT_URL。" +
-		" 支援 ssh:// 或 https:// 倉庫地址。",
+	dataFromLocalSkillsRepo: "請在設定頁中設定「內部技能倉庫地址」",
 	localMarketSearchError:
 		"無法搜尋內部技能。請先到 設定 > 整合 設定「內部技能倉庫地址」，" +
 		"或在 API 環境設定 AGHUB_LOCAL_SKILLS_REPO_GIT_URL。",
@@ -479,8 +476,7 @@ export default {
 	mcpMarketInternal: "內網 Git",
 	mcpMarketSearchSource: "MCP 目錄來源",
 	mcpMarketSourceHint: "目錄來源說明",
-	mcpMarketDataFromRegistry:
-		"使用官方 MCP Registry（registry.modelcontextprotocol.io）。選用：在 API 環境設定 AGHUB_MCP_REGISTRY_URL 指向靜態 JSON 目錄以覆寫。",
+	mcpMarketDataFromRegistry: "請在設定頁中設定「內部 MCP 目錄倉庫地址」",
 	mcpMarketDataFromInternalRepo:
 		"使用設定中的「內部 MCP 目錄倉庫」，或 AGHUB_LOCAL_MCP_REPO / AGHUB_LOCAL_MCP_REPO_GIT_URL。",
 	localMcpMarketSearchError:

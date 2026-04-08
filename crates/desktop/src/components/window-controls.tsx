@@ -42,6 +42,7 @@ export function WindowControls() {
 	const isMac = navigator.userAgent.toLowerCase().includes("mac");
 
 	const [isMaximized, setIsMaximized] = useState(false);
+	const [isFullscreen, setIsFullscreen] = useState(false);
 	const [isTauri, setIsTauri] = useState(true);
 
 	useEffect(() => {
@@ -50,9 +51,13 @@ export function WindowControls() {
 		const setup = async () => {
 			try {
 				const appWindow = getCurrentWindow();
-				setIsMaximized(await appWindow.isMaximized());
-				unlisten = await appWindow.onResized(async () => {
+				const refreshWindowState = async () => {
 					setIsMaximized(await appWindow.isMaximized());
+					setIsFullscreen(await appWindow.isFullscreen());
+				};
+				await refreshWindowState();
+				unlisten = await appWindow.onResized(async () => {
+					await refreshWindowState();
 				});
 			} catch {
 				// Not running inside Tauri
@@ -88,16 +93,20 @@ export function WindowControls() {
 				onClick={async () => {
 					try {
 						const appWindow = getCurrentWindow();
-						if (await appWindow.isMaximized()) {
+						if (await appWindow.isFullscreen()) {
+							await appWindow.setFullscreen(false);
+						} else if (await appWindow.isMaximized()) {
 							await appWindow.unmaximize();
 						} else {
 							await appWindow.maximize();
 						}
+						setIsMaximized(await appWindow.isMaximized());
+						setIsFullscreen(await appWindow.isFullscreen());
 					} catch {}
 				}}
 				tabIndex={-1}
 			>
-				{isMaximized ? (
+				{isMaximized || isFullscreen ? (
 					<RestoreIcon className="h-4 w-4" />
 				) : (
 					<MaximizeIcon className="h-3.5 w-3.5" />

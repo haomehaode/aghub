@@ -94,12 +94,12 @@ export default {
 		"Choose your preferred code editor for opening files",
 	localSkillsRepoGitUrl: "Internal skills repository URL",
 	localSkillsRepoGitUrlDescription:
-		"Used for local-source skill search and install (supports ssh:// or https:// repo URL).",
+		"Used for internal skills search and installation (supports ssh:// or https:// repository URLs).",
 	localSkillsRepoSaved: "Internal skills repository URL saved",
 	localSkillsRepoSaveFailed: "Failed to save internal skills repository URL",
 	localMcpRepoGitUrl: "Internal MCP catalog repository URL",
 	localMcpRepoGitUrlDescription:
-		"Git URL cloned to discover *.mcp.json and mcp-catalog.json files (same transport shape as the public catalog). Supports ssh:// or https://.",
+		"Used for internal MCP catalog search and installation (supports ssh:// or https:// repository URLs).",
 	localMcpRepoSaved: "Internal MCP repository URL saved",
 	localMcpRepoSaveFailed: "Failed to save internal MCP repository URL",
 
@@ -465,9 +465,7 @@ export default {
 	marketSearchSource: "Skill search source",
 	marketSourceHint: "Data source information",
 	dataFromLocalSkillsRepo:
-		"Defaults to the Internal skills repository URL in Settings; also supports " +
-		"AGHUB_LOCAL_SKILLS_REPO / AGHUB_LOCAL_SKILLS_REPO_GIT_URL as fallback. " +
-		"Supports ssh:// or https:// repository URLs.",
+		"Please set the Internal skills repository URL in Settings.",
 	localMarketSearchError:
 		"Could not search internal skills. Configure Internal skills repository URL in " +
 		"Settings > Integrations, or set AGHUB_LOCAL_SKILLS_REPO_GIT_URL.",
@@ -482,7 +480,7 @@ export default {
 	mcpMarketSearchSource: "MCP catalog source",
 	mcpMarketSourceHint: "Catalog source",
 	mcpMarketDataFromRegistry:
-		"Uses the official MCP Registry (registry.modelcontextprotocol.io). Optional override: set AGHUB_MCP_REGISTRY_URL on the API host for a static JSON catalog.",
+		"Please set the Internal MCP catalog repository URL in Settings.",
 	mcpMarketDataFromInternalRepo:
 		"Uses Internal MCP catalog repository URL in Settings, or AGHUB_LOCAL_MCP_REPO / AGHUB_LOCAL_MCP_REPO_GIT_URL.",
 	localMcpMarketSearchError:

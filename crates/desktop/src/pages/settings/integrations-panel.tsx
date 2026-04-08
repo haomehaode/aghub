@@ -240,7 +240,7 @@ export default function IntegrationsPanel() {
 							onChange={(e) =>
 								setLocalSkillsRepoGitUrl(e.target.value)
 							}
-							placeholder='ssh://brow.src.corp.qihoo.net:29418/skills'
+							placeholder='ssh://git.example.com/skills-catalog.git'
 						/>
 						<Button onPress={handleSaveLocalSkillsRepoGitUrl}>
 							{t("save")}
