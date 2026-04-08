@@ -112,7 +112,6 @@ export default function IntegrationsPanel() {
 				setDeleteTarget(null);
 			},
 		}),
-		onSuccess: () => {},
 		onError: (error) => {
 			console.error("Failed to delete credential:", error);
 			toast.danger(
@@ -235,6 +234,7 @@ export default function IntegrationsPanel() {
 					</div>
 					<div className="flex items-center gap-2">
 						<Input
+							className="min-w-0 flex-1"
 							variant="secondary"
 							value={localSkillsRepoGitUrl}
 							onChange={(e) =>
@@ -242,7 +242,10 @@ export default function IntegrationsPanel() {
 							}
 							placeholder='ssh://git.example.com/skills-catalog.git'
 						/>
-						<Button onPress={handleSaveLocalSkillsRepoGitUrl}>
+						<Button
+							className="shrink-0"
+							onPress={handleSaveLocalSkillsRepoGitUrl}
+						>
 							{t("save")}
 						</Button>
 					</div>
@@ -261,6 +264,7 @@ export default function IntegrationsPanel() {
 					</div>
 					<div className="flex items-center gap-2">
 						<Input
+							className="min-w-0 flex-1"
 							variant="secondary"
 							value={localMcpRepoGitUrl}
 							onChange={(e) =>
@@ -268,7 +272,10 @@ export default function IntegrationsPanel() {
 							}
 							placeholder="ssh://git.example.com/mcp-catalog.git"
 						/>
-						<Button onPress={handleSaveLocalMcpRepoGitUrl}>
+						<Button
+							className="shrink-0"
+							onPress={handleSaveLocalMcpRepoGitUrl}
+						>
 							{t("save")}
 						</Button>
 					</div>

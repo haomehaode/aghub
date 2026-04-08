@@ -77,7 +77,7 @@ export function WindowControls() {
 		<div className="flex h-full items-stretch">
 			<button
 				type="button"
-				className="inline-flex w-12 cursor-default items-center justify-center text-muted transition-colors hover:bg-surface-secondary hover:text-foreground"
+				className="inline-flex w-12 cursor-pointer items-center justify-center text-muted transition-colors hover:bg-surface-secondary hover:text-foreground"
 				onClick={async () => {
 					try {
 						await getCurrentWindow().minimize();
@@ -89,16 +89,14 @@ export function WindowControls() {
 			</button>
 			<button
 				type="button"
-				className="inline-flex w-12 cursor-default items-center justify-center text-muted transition-colors hover:bg-surface-secondary hover:text-foreground"
+				className="inline-flex w-12 cursor-pointer items-center justify-center text-muted transition-colors hover:bg-surface-secondary hover:text-foreground"
 				onClick={async () => {
 					try {
 						const appWindow = getCurrentWindow();
 						if (await appWindow.isFullscreen()) {
 							await appWindow.setFullscreen(false);
-						} else if (await appWindow.isMaximized()) {
-							await appWindow.unmaximize();
 						} else {
-							await appWindow.maximize();
+							await appWindow.toggleMaximize();
 						}
 						setIsMaximized(await appWindow.isMaximized());
 						setIsFullscreen(await appWindow.isFullscreen());
@@ -114,7 +112,7 @@ export function WindowControls() {
 			</button>
 			<button
 				type="button"
-				className="inline-flex w-12 cursor-default items-center justify-center text-muted transition-colors hover:bg-danger hover:text-white"
+				className="inline-flex w-12 cursor-pointer items-center justify-center text-muted transition-colors hover:bg-danger hover:text-white"
 				onClick={async () => {
 					try {
 						await getCurrentWindow().close();

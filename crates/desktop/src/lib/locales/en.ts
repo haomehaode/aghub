@@ -480,9 +480,9 @@ export default {
 	mcpMarketSearchSource: "MCP catalog source",
 	mcpMarketSourceHint: "Catalog source",
 	mcpMarketDataFromRegistry:
-		"Please set the Internal MCP catalog repository URL in Settings.",
+		"Data from github.com",
 	mcpMarketDataFromInternalRepo:
-		"Uses Internal MCP catalog repository URL in Settings, or AGHUB_LOCAL_MCP_REPO / AGHUB_LOCAL_MCP_REPO_GIT_URL.",
+		"Please set the Internal MCP catalog repository URL in Settings.",
 	localMcpMarketSearchError:
 		"Could not search internal MCP catalogs. Configure Internal MCP catalog repository URL in Settings > Integrations.",
 	mcpMarketRegistryError:

@@ -466,8 +466,7 @@ export default {
 	marketSourceHint: "数据来源说明",
 	dataFromLocalSkillsRepo: "请在设置页中设置“内部技能仓库地址”",
 	localMarketSearchError:
-		"无法搜索内部技能。请先到 设置 > 集成 配置“内部技能仓库地址”，" +
-		"或在 API 环境设置 AGHUB_LOCAL_SKILLS_REPO_GIT_URL。",
+		"无法搜索内部技能。请先到 设置 > 集成 配置“内部技能仓库地址”",
 
 	searchMcpMarket: "搜索 MCP 目录…",
 	searchPublicMcpMarketPlaceholder: "按名称、简介或作者筛选…",
@@ -476,9 +475,8 @@ export default {
 	mcpMarketInternal: "内网 Git",
 	mcpMarketSearchSource: "MCP 目录来源",
 	mcpMarketSourceHint: "目录来源说明",
-	mcpMarketDataFromRegistry: "请在设置页中设置“内部 MCP 目录仓库地址”",
-	mcpMarketDataFromInternalRepo:
-		"使用设置中的「内部 MCP 目录仓库」，或 AGHUB_LOCAL_MCP_REPO / AGHUB_LOCAL_MCP_REPO_GIT_URL。",
+	mcpMarketDataFromRegistry: "数据来自 github.com",
+	mcpMarketDataFromInternalRepo: "请在设置页中设置“内部 MCP 目录仓库地址”",
 	localMcpMarketSearchError:
 		"无法搜索内部 MCP。请先到 设置 > 集成 配置「内部 MCP 目录仓库地址」。",
 	mcpMarketRegistryError:

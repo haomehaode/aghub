@@ -476,9 +476,8 @@ export default {
 	mcpMarketInternal: "內網 Git",
 	mcpMarketSearchSource: "MCP 目錄來源",
 	mcpMarketSourceHint: "目錄來源說明",
-	mcpMarketDataFromRegistry: "請在設定頁中設定「內部 MCP 目錄倉庫地址」",
-	mcpMarketDataFromInternalRepo:
-		"使用設定中的「內部 MCP 目錄倉庫」，或 AGHUB_LOCAL_MCP_REPO / AGHUB_LOCAL_MCP_REPO_GIT_URL。",
+	mcpMarketDataFromRegistry: "資料來自 github.com",
+	mcpMarketDataFromInternalRepo: "請在設定頁中設定「內部 MCP 目錄倉庫地址」",
 	localMcpMarketSearchError:
 		"無法搜尋內部 MCP。請先到 設定 > 整合 設定「內部 MCP 目錄倉庫地址」。",
 	mcpMarketRegistryError:

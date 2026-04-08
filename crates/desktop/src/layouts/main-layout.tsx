@@ -11,10 +11,12 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 			className="flex h-screen flex-col overflow-hidden"
 		>
 			<div
-				data-tauri-drag-region
 				className="flex h-8 shrink-0 items-center justify-between border-b border-border pl-3"
 			>
-				<div className="pointer-events-none flex select-none items-center">
+				<div
+					data-tauri-drag-region
+					className="flex h-full flex-1 select-none items-center"
+				>
 					{!isMac && (
 						<span className="text-xs font-medium tracking-wide text-foreground/50">
 							AgentHub
