@@ -4,11 +4,9 @@ import type {
 	AgentAvailabilityDto,
 	AgentInfo,
 	CodeEditorType,
-	CreateCredentialRequest,
 	CreateMcpRequest,
 	CreateSkillRequest,
 	CreateSubAgentRequest,
-	CredentialResponse,
 	DeleteSkillByPathRequest,
 	DeleteSkillByPathResponse,
 	GitInstallRequest,
@@ -462,17 +460,6 @@ export function createApi(baseUrl: string) {
 						json: { path, editor },
 					})
 					.then(() => undefined);
-			},
-		},
-		credentials: {
-			list(): Promise<CredentialResponse[]> {
-				return client.get("credentials").json();
-			},
-			create(body: CreateCredentialRequest): Promise<CredentialResponse> {
-				return client.post("credentials", { json: body }).json();
-			},
-			delete(id: string): Promise<void> {
-				return client.delete(`credentials/${id}`).then(() => undefined);
 			},
 		},
 	};

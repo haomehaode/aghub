@@ -43,10 +43,6 @@ export const queryKeys = {
 			scope: "global" | "project" | "all",
 		) => ["sub-agents", "detail", name, agent, scope] as const,
 	},
-	credentials: {
-		all: () => ["credentials"] as const,
-		list: () => ["credentials", "list"] as const,
-	},
 	integrations: {
 		all: () => ["integrations"] as const,
 		codeEditors: () => ["integrations", "code-editors"] as const,

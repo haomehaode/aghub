@@ -48,28 +48,6 @@ export default {
 	replayAppTour: "Replay App Tour",
 	replayProjectTour: "Replay Project Tour",
 
-	// Credentials
-	credentials: "Credentials",
-	credentialsDescription:
-		"Manage stored credentials for integrations like GitHub.",
-	credentialName: "Name",
-	credentialType: "Type",
-	credentialToken: "Token",
-	githubCredential: "GitHub",
-	createCredential: "Add Credential",
-	credentialCreated: "Credential added successfully",
-	credentialDeleted: "Credential deleted",
-	credentialDeleteFailed: "Failed to delete credential",
-	noCredentials: "No credentials yet. Add one to get started.",
-	deleteCredential: "Delete Credential",
-	deleteCredentialConfirm:
-		"Are you sure you want to delete this credential? This action cannot be undone.",
-	credentialNamePlaceholder: "e.g., personal",
-	credentialTokenPlaceholder: "ghp_...",
-	validationCredentialNameRequired: "Enter a credential name.",
-	validationCredentialTokenRequired: "Enter a GitHub token.",
-	credentialTokenGenerate: "Generate on GitHub →",
-
 	// Settings
 	appearance: "Appearance",
 	theme: "Theme",
@@ -230,20 +208,16 @@ export default {
 	createLocalSkill: "Create New Skill",
 	createCustomSkill: "Create Custom Skill",
 	importRemoteSource: "Import Remote Source",
-	repositoryAndCredentials: "Repository & Credentials",
+	repositoryAndCredentials: "Git repository",
 	importFromFile: "Import from File",
 	importFromGitRepository: "Import Remote Source",
 	githubRepoUrl: "Repository URL",
 	githubRepoUrlPlaceholder: "https://github.com/owner/repo",
-	selectCredential: "Credentials",
-	publicRepoNoCredential: "None (public repository)",
-	privateRepo: "Private repo?",
-	addToken: "Add token…",
 	scanRepo: "Scan",
 	scanningRepo: "Scanning...",
 	scanFailed: "Failed to scan repository",
 	scanFailedHint:
-		"Please check you are using the correct token or that SSO is configured correctly.",
+		"Check the URL and that your system Git credentials (credential manager or SSH) can access this repository.",
 	noSkillsFoundInRepo: "No skills found in this repository.",
 	selectSkillsToInstall: "Select skills to install",
 	branch: "Branch",
@@ -468,7 +442,7 @@ export default {
 		"Please set the Internal skills repository URL in Settings.",
 	localMarketSearchError:
 		"Could not search internal skills. Configure Internal skills repository URL in " +
-		"Settings > Integrations, or set AGHUB_LOCAL_SKILLS_REPO_GIT_URL.",
+		"Settings > Integrations.",
 
 	searchMcpMarket: "Search MCP catalog…",
 	searchPublicMcpMarketPlaceholder:

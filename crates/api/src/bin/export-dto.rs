@@ -11,7 +11,6 @@ use aghub_api::dto::{
 		SubAgentCapabilitiesDto,
 	},
 	common::ConfigSource,
-	credential::{CreateCredentialRequest, CredentialResponse},
 	integrations::{
 		CodeEditorType, EditSkillFolderRequest, OpenSkillFolderRequest,
 		OpenWithEditorRequest, ToolInfoDto, ToolPreferencesDto,
@@ -112,8 +111,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	export_type::<AgentInfo>(&cfg)?;
 	export_type::<AgentAvailabilityDto>(&cfg)?;
 	export_type::<ConfigSource>(&cfg)?;
-	export_type::<CreateCredentialRequest>(&cfg)?;
-	export_type::<CredentialResponse>(&cfg)?;
 	export_type::<CodeEditorType>(&cfg)?;
 	export_type::<ToolInfoDto>(&cfg)?;
 	export_type::<ToolPreferencesDto>(&cfg)?;

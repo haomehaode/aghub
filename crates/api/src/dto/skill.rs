@@ -230,7 +230,6 @@ pub struct ValidationError {
 #[ts(export)]
 pub struct GitScanRequest {
 	pub url: String,
-	pub credential_id: Option<String>,
 	pub branch: Option<String>,
 	/// When re-scanning (e.g. branch switch), pass the existing
 	/// session ID so the old clone is replaced.

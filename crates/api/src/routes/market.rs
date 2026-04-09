@@ -12,47 +12,73 @@ use crate::error::ApiError;
 use tempfile::TempDir;
 
 const LOCAL_SKILLS_REPO_ENV: &str = "AGHUB_LOCAL_SKILLS_REPO";
-const LOCAL_SKILLS_REPO_GIT_URL_ENV: &str = "AGHUB_LOCAL_SKILLS_REPO_GIT_URL";
+
+/// Clone a catalog repo using the **system** `git` binary (same auth as your terminal:
+/// credential manager, `~/.gitconfig`, SSH keys, etc.).
+pub(crate) fn clone_git_repo_shallow(
+	repo_url: &str,
+	branch: Option<&str>,
+) -> Result<TempDir, ApiError> {
+	let temp_dir = tempfile::tempdir().map_err(|e| {
+		ApiError::new(
+			Status::InternalServerError,
+			format!("Failed to create temporary directory: {e}"),
+			"TEMP_DIR_CREATE_FAILED",
+		)
+	})?;
+	let mut cmd = std::process::Command::new("git");
+	cmd.args(["clone", "--depth", "1"]);
+	if let Some(b) = branch.filter(|s| !s.is_empty()) {
+		cmd.args(["--branch", b]);
+	}
+	cmd.arg(repo_url).arg(temp_dir.path());
+	let status = cmd.status().map_err(|e| {
+		ApiError::new(
+			Status::BadGateway,
+			format!("Failed to execute git clone: {e}"),
+			"LOCAL_SKILLS_GIT_CLONE_FAILED",
+		)
+	})?;
+	if !status.success() {
+		return Err(ApiError::new(
+			Status::BadGateway,
+			format!("git clone failed for repository: {repo_url}"),
+			"LOCAL_SKILLS_GIT_CLONE_FAILED",
+		));
+	}
+	Ok(temp_dir)
+}
 
 pub(crate) fn clone_internal_repo(repo_url: &str) -> Result<TempDir, ApiError> {
-	if repo_url.starts_with("ssh://") || repo_url.starts_with("git@") {
-		let temp_dir = tempfile::tempdir().map_err(|e| {
-			ApiError::new(
-				Status::InternalServerError,
-				format!("Failed to create temporary directory: {e}"),
-				"TEMP_DIR_CREATE_FAILED",
-			)
-		})?;
-		let status = std::process::Command::new("git")
-			.args(["clone", "--depth", "1", repo_url])
-			.arg(temp_dir.path())
-			.status()
-			.map_err(|e| {
-				ApiError::new(
-					Status::BadGateway,
-					format!("Failed to execute git clone: {e}"),
-					"LOCAL_SKILLS_GIT_CLONE_FAILED",
-				)
-			})?;
-		if !status.success() {
-			return Err(ApiError::new(
-				Status::BadGateway,
-				format!("git clone failed for repository: {repo_url}"),
-				"LOCAL_SKILLS_GIT_CLONE_FAILED",
-			));
-		}
-		return Ok(temp_dir);
-	}
+	clone_git_repo_shallow(repo_url, None)
+}
 
-	aghub_git::clone_to_temp(aghub_git::CloneOptions::new(repo_url)).map_err(
-		|e| {
-			ApiError::new(
-				Status::BadGateway,
-				format!("Failed to clone local skills repository: {e}"),
-				"LOCAL_SKILLS_GIT_CLONE_FAILED",
-			)
-		},
-	)
+/// Remote branch names via `git ls-remote --heads` (uses system Git auth).
+pub(crate) fn git_list_remote_heads(url: &str) -> Result<Vec<String>, String> {
+	let output = std::process::Command::new("git")
+		.args(["ls-remote", "--heads", url])
+		.output()
+		.map_err(|e| e.to_string())?;
+	if !output.status.success() {
+		let err = String::from_utf8_lossy(&output.stderr);
+		return Err(if err.trim().is_empty() {
+			format!("git ls-remote failed for {url}")
+		} else {
+			err.into_owned()
+		});
+	}
+	let mut branches = Vec::new();
+	for line in String::from_utf8_lossy(&output.stdout).lines() {
+		let Some(rest) = line.split('\t').nth(1) else {
+			continue;
+		};
+		if let Some(name) = rest.strip_prefix("refs/heads/") {
+			branches.push(name.to_string());
+		}
+	}
+	branches.sort();
+	branches.dedup();
+	Ok(branches)
 }
 
 /// Search skills from marketplace
@@ -136,13 +162,13 @@ fn search_local_skills_repo(
 				.map(str::trim)
 				.filter(|s| !s.is_empty())
 				.map(str::to_string)
-				.or_else(|| std::env::var(LOCAL_SKILLS_REPO_GIT_URL_ENV).ok())
 				.ok_or_else(|| {
 					ApiError::new(
 						Status::BadRequest,
 						format!(
-							"Set local skills repo in settings, or set \
-							 {LOCAL_SKILLS_REPO_ENV}/{LOCAL_SKILLS_REPO_GIT_URL_ENV}."
+							"Missing local skills source: set {LOCAL_SKILLS_REPO_ENV} to \
+							 workspace paths, or configure Internal skills repository URL \
+							 in Settings > Integrations (search sends repo_url)."
 						),
 						"LOCAL_SKILLS_SOURCE_NOT_SET",
 					)

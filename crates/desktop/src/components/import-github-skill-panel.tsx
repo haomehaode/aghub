@@ -23,7 +23,7 @@ import {
 	TextField,
 	toast,
 } from "@heroui/react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -35,8 +35,6 @@ import { useAgentAvailability } from "../hooks/use-agent-availability";
 import { useApi } from "../hooks/use-api";
 import { supportsSkillMutation } from "../lib/agent-capabilities";
 import { cn } from "../lib/utils";
-import { CreateCredentialDialog } from "../pages/settings/components/create-credential-dialog";
-import { credentialsListQueryOptions } from "../requests/credentials";
 import { gitInstallSkillsMutationOptions } from "../requests/skills";
 import { AgentSelector } from "./agent-selector";
 
@@ -45,11 +43,8 @@ interface ImportGithubSkillPanelProps {
 	projectPath?: string;
 }
 
-const ADD_TOKEN_SENTINEL = "__add_token__";
-
 interface InputFormValues {
 	url: string;
-	credentialId: string;
 	selectedAgents: string[];
 }
 
@@ -92,8 +87,6 @@ export function ImportGithubSkillPanel({
 	const [card1Open, setCard1Open] = useState(true);
 	const [card2Open, setCard2Open] = useState(false);
 	const [card3Open, setCard3Open] = useState(false);
-	const [isPrivateRepo, setIsPrivateRepo] = useState(false);
-	const [isAddTokenOpen, setIsAddTokenOpen] = useState(false);
 	const [scannedSkills, setScannedSkills] = useState<GitScanSkillEntry[]>([]);
 	const [selectedPaths, setSelectedPaths] = useState<Set<string>>(
 		() => new Set(),
@@ -110,22 +103,16 @@ export function ImportGithubSkillPanel({
 		null,
 	);
 
-	const { data: credentials = [] } = useQuery({
-		...credentialsListQueryOptions({ api, enabled: isPrivateRepo }),
-	});
-
 	const {
 		control,
 		handleSubmit,
 		reset,
-		setValue,
 		formState: { isSubmitting },
 	} = useForm<InputFormValues>({
 		mode: "onSubmit",
 		reValidateMode: "onChange",
 		defaultValues: {
 			url: "",
-			credentialId: "",
 			selectedAgents: skillAgents[0] ? [skillAgents[0].id] : [],
 		},
 	});
@@ -136,7 +123,6 @@ export function ImportGithubSkillPanel({
 		mutationFn: (values: InputFormValues) =>
 			api.skills.gitScan({
 				url: values.url.trim(),
-				credential_id: values.credentialId || null,
 				branch: null,
 				session_id: null,
 			}),
@@ -165,7 +151,6 @@ export function ImportGithubSkillPanel({
 		mutationFn: (branch: string) =>
 			api.skills.gitScan({
 				url: urlValue.trim(),
-				credential_id: null,
 				branch,
 				session_id: sessionId,
 			}),
@@ -230,7 +215,6 @@ export function ImportGithubSkillPanel({
 
 	const handleImportAnother = () => {
 		reset();
-		setIsPrivateRepo(false);
 		setScannedSkills([]);
 		setSelectedPaths(new Set());
 		setSessionId("");
@@ -445,112 +429,6 @@ export function ImportGithubSkillPanel({
 											/>
 										</Fieldset.Group>
 									</Fieldset>
-
-									{/* Private repo checkbox */}
-									<Checkbox
-										variant="secondary"
-										isSelected={isPrivateRepo}
-										onChange={(checked) => {
-											setIsPrivateRepo(checked);
-											if (!checked)
-												setValue("credentialId", "");
-										}}
-									>
-										<Checkbox.Control>
-											<Checkbox.Indicator />
-										</Checkbox.Control>
-										<Checkbox.Content>
-											<Label>{t("privateRepo")}</Label>
-										</Checkbox.Content>
-									</Checkbox>
-
-									{/* Credential dropdown */}
-									{isPrivateRepo && (
-										<Fieldset>
-											<Fieldset.Group>
-												<Controller
-													name="credentialId"
-													control={control}
-													render={({ field }) => (
-														<Select
-															className="w-full"
-															variant="secondary"
-															selectedKey={
-																field.value ||
-																undefined
-															}
-															onSelectionChange={(
-																key,
-															) => {
-																if (
-																	key ===
-																	ADD_TOKEN_SENTINEL
-																) {
-																	setIsAddTokenOpen(
-																		true,
-																	);
-																	return;
-																}
-																field.onChange(
-																	String(key),
-																);
-															}}
-														>
-															<Label>
-																{t(
-																	"selectCredential",
-																)}
-															</Label>
-															<Select.Trigger>
-																<Select.Value />
-																<Select.Indicator />
-															</Select.Trigger>
-															<Select.Popover>
-																<ListBox>
-																	{credentials.map(
-																		(
-																			cred,
-																		) => (
-																			<ListBox.Item
-																				key={
-																					cred.id
-																				}
-																				id={
-																					cred.id
-																				}
-																				textValue={
-																					cred.name
-																				}
-																			>
-																				{
-																					cred.name
-																				}
-																				<ListBox.ItemIndicator />
-																			</ListBox.Item>
-																		),
-																	)}
-																	<ListBox.Section className="mt-1 border-t border-border pt-1">
-																		<ListBox.Item
-																			id={
-																				ADD_TOKEN_SENTINEL
-																			}
-																			textValue={t(
-																				"addToken",
-																			)}
-																		>
-																			{t(
-																				"addToken",
-																			)}
-																		</ListBox.Item>
-																	</ListBox.Section>
-																</ListBox>
-															</Select.Popover>
-														</Select>
-													)}
-												/>
-											</Fieldset.Group>
-										</Fieldset>
-									)}
 
 									<div className="flex justify-end gap-2 pt-2">
 										<Button
@@ -1089,14 +967,6 @@ export function ImportGithubSkillPanel({
 					</Modal.Dialog>
 				</Modal.Container>
 			</Modal.Backdrop>
-
-			<CreateCredentialDialog
-				isOpen={isAddTokenOpen}
-				onClose={() => setIsAddTokenOpen(false)}
-				onSuccess={(newId) => {
-					if (newId) setValue("credentialId", newId);
-				}}
-			/>
 		</div>
 	);
 }

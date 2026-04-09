@@ -32,55 +32,12 @@ use crate::{
 	error::{ApiCreated, ApiError, ApiNoContent, ApiResult},
 	extractors::{AgentParam, ScopeParams},
 	routes::{
-		build_manager_from_resolved, require_writable_scope,
-		resolved_to_resource_scope,
+		build_manager_from_resolved,
+		market::{clone_git_repo_shallow, clone_internal_repo, git_list_remote_heads},
+		require_writable_scope, resolved_to_resource_scope,
 	},
 	state::{GitCloneSession, GitCloneSessions},
 };
-use tempfile::TempDir;
-
-const LOCAL_SKILLS_REPO_GIT_URL_ENV: &str = "AGHUB_LOCAL_SKILLS_REPO_GIT_URL";
-
-fn clone_internal_repo(repo_url: &str) -> Result<TempDir, ApiError> {
-	if repo_url.starts_with("ssh://") || repo_url.starts_with("git@") {
-		let temp_dir = tempfile::tempdir().map_err(|e| {
-			ApiError::new(
-				Status::InternalServerError,
-				format!("Failed to create temporary directory: {e}"),
-				"TEMP_DIR_CREATE_FAILED",
-			)
-		})?;
-		let status = std::process::Command::new("git")
-			.args(["clone", "--depth", "1", repo_url])
-			.arg(temp_dir.path())
-			.status()
-			.map_err(|e| {
-				ApiError::new(
-					Status::BadGateway,
-					format!("Failed to execute git clone: {e}"),
-					"LOCAL_SKILLS_GIT_CLONE_FAILED",
-				)
-			})?;
-		if !status.success() {
-			return Err(ApiError::new(
-				Status::BadGateway,
-				format!("git clone failed for repository: {repo_url}"),
-				"LOCAL_SKILLS_GIT_CLONE_FAILED",
-			));
-		}
-		return Ok(temp_dir);
-	}
-
-	aghub_git::clone_to_temp(aghub_git::CloneOptions::new(repo_url)).map_err(
-		|e| {
-			ApiError::new(
-				Status::BadGateway,
-				format!("Failed to clone local skills repository: {e}"),
-				"LOCAL_SKILLS_GIT_CLONE_FAILED",
-			)
-		},
-	)
-}
 
 fn expand_tilde_path(path: &str) -> std::path::PathBuf {
 	if path.starts_with("~/") {
@@ -97,7 +54,7 @@ async fn list_branches_for_scan<F>(
 	fetcher: F,
 ) -> Result<Vec<String>, ApiError>
 where
-	F: FnOnce() -> aghub_git::Result<Vec<String>> + Send + 'static,
+	F: FnOnce() -> Result<Vec<String>, String> + Send + 'static,
 {
 	if let Some(cached) = cached_branches {
 		return Ok(cached);
@@ -382,14 +339,11 @@ fn install_local_git_skill(
 		.map(|s| s.trim())
 		.filter(|s| !s.is_empty())
 		.map(str::to_string)
-		.or_else(|| std::env::var(LOCAL_SKILLS_REPO_GIT_URL_ENV).ok())
 		.ok_or_else(|| {
 			ApiError::new(
 				Status::BadRequest,
-				format!(
-					"Missing repo URL. Set it in settings or via \
-					 {LOCAL_SKILLS_REPO_GIT_URL_ENV}."
-				),
+				"Missing Internal skills repository URL. Set it in Settings > Integrations."
+					.to_string(),
 				"LOCAL_SKILLS_GIT_URL_NOT_SET",
 			)
 		})?;
@@ -1110,35 +1064,7 @@ pub async fn git_scan_skills(
 ) -> ApiResult<GitScanResponse> {
 	let req = body.into_inner();
 
-	// Resolve credential token — either from session or from request
-	let credential_token: Option<String> =
-		if let Some(ref cred_id) = req.credential_id {
-			let creds = crate::routes::credentials::load_credentials()
-				.map_err(|e| {
-					ApiError::new(
-						Status::InternalServerError,
-						format!("Failed to read credentials: {e}"),
-						"KEYCHAIN_ERROR",
-					)
-				})?;
-			let cred =
-				creds.iter().find(|c| c.id == *cred_id).ok_or_else(|| {
-					ApiError::new(
-						Status::NotFound,
-						"Credential not found",
-						"CREDENTIAL_NOT_FOUND",
-					)
-				})?;
-			Some(cred.token.clone())
-		} else if let Some(ref sid) = req.session_id {
-			// Reuse credential from existing session
-			let map = sessions.sessions.lock().unwrap();
-			map.get(sid).and_then(|s| s.credential_token.clone())
-		} else {
-			None
-		};
-
-	// Retrieve cached branches from existing session if re-scanning
+	// Cached branches from existing session when re-scanning (branch switch).
 	let cached_branches: Option<Vec<String>> =
 		if let Some(ref sid) = req.session_id {
 			let map = sessions.sessions.lock().unwrap();
@@ -1149,18 +1075,9 @@ pub async fn git_scan_skills(
 
 	let url = req.url.clone();
 	let branch = req.branch.clone();
-	let token_for_clone = credential_token.clone();
 
-	// Clone repo in a blocking thread (gix is synchronous)
 	let temp_dir = tokio::task::spawn_blocking(move || {
-		let mut options = aghub_git::CloneOptions::new(&url);
-		if let Some(token) = token_for_clone {
-			options = options.with_credentials("x-access-token", token);
-		}
-		if let Some(ref branch) = branch {
-			options = options.with_branch(branch);
-		}
-		aghub_git::clone_to_temp(options)
+		clone_git_repo_shallow(&url, branch.as_deref())
 	})
 	.await
 	.map_err(|e| {
@@ -1171,24 +1088,12 @@ pub async fn git_scan_skills(
 		)
 	})?
 	.map_err(|e| {
-		ApiError::new(
-			Status::BadRequest,
-			format!("Failed to clone repository: {e}"),
-			"CLONE_FAILED",
-		)
+		ApiError::new(Status::BadRequest, e.body.error, "CLONE_FAILED")
 	})?;
 
-	// List remote branches (use cache from previous session if
-	// available to avoid an extra network call on branch switch)
 	let branch_url = req.url.clone();
-	let credential_token_for_branches = credential_token.clone();
 	let branches = list_branches_for_scan(cached_branches, move || {
-		let options = match credential_token_for_branches {
-			Some(token) => aghub_git::RemoteOptions::new(&branch_url)
-				.with_credentials("x-access-token", token),
-			None => aghub_git::RemoteOptions::new(&branch_url),
-		};
-		aghub_git::list_remote_branches(options)
+		git_list_remote_heads(&branch_url)
 	})
 	.await?;
 
@@ -1267,7 +1172,6 @@ pub async fn git_scan_skills(
 				temp_dir,
 				created_at: std::time::Instant::now(),
 				url: req.url,
-				credential_token,
 				branches: branches.clone(),
 				current_branch: current_branch.clone(),
 			},
@@ -1583,7 +1487,7 @@ mod tests {
 		let runtime = tokio::runtime::Runtime::new().unwrap();
 		let error = runtime
 			.block_on(list_branches_for_scan(None, || {
-				Err(aghub_git::GitError::clone_failed("boom"))
+				Err("boom".to_string())
 			}))
 			.unwrap_err();
 		assert_eq!(error.status, Status::BadRequest);

@@ -5,7 +5,6 @@ const BACKSLASH_RE = /\\/g;
 import {
 	Alert,
 	Button,
-	Checkbox,
 	Chip,
 	Input,
 	Label,
@@ -16,13 +15,11 @@ import {
 	TextField,
 	toast,
 } from "@heroui/react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { GitScanSkillEntry } from "../generated/dto";
 import { useApi } from "../hooks/use-api";
-import { CreateCredentialDialog } from "../pages/settings/components/create-credential-dialog";
-import { credentialsListQueryOptions } from "../requests/credentials";
 import { gitSyncSkillMutationOptions } from "../requests/skills";
 import type { SkillGroup } from "./skill-detail-helpers";
 
@@ -35,8 +32,6 @@ interface SyncGithubSkillDialogProps {
 	onClose: () => void;
 	projectPath?: string;
 }
-
-const ADD_TOKEN_SENTINEL = "__add_token__";
 
 export function SyncGithubSkillDialog({
 	group,
@@ -52,9 +47,6 @@ export function SyncGithubSkillDialog({
 	const [phase, setPhase] = useState<
 		"idle" | "scanning" | "scanned" | "syncing" | "done"
 	>("idle");
-	const [isPrivateRepo, setIsPrivateRepo] = useState(false);
-	const [credentialId, setCredentialId] = useState<string>("");
-	const [isAddTokenOpen, setIsAddTokenOpen] = useState(false);
 	const [sessionId, setSessionId] = useState<string>("");
 	const [branches, setBranches] = useState<string[]>([]);
 	const [currentBranch, setCurrentBranch] = useState<string>("");
@@ -64,13 +56,6 @@ export function SyncGithubSkillDialog({
 	const [previewSkill, setPreviewSkill] = useState<GitScanSkillEntry | null>(
 		null,
 	);
-
-	const { data: credentials = [] } = useQuery({
-		...credentialsListQueryOptions({
-			api,
-			enabled: isOpen && isPrivateRepo,
-		}),
-	});
 
 	// Match the current skill in the scanned results by the known skillPath.
 	// Falls back to matching by skill name.
@@ -99,7 +84,6 @@ export function SyncGithubSkillDialog({
 		mutationFn: (branch?: string) =>
 			api.skills.gitScan({
 				url: sourceUrl,
-				credential_id: credentialId || null,
 				branch: branch ?? null,
 				session_id: branch ? sessionId : null,
 			}),
@@ -167,8 +151,6 @@ export function SyncGithubSkillDialog({
 		if (phase === "syncing") return;
 		// Reset all state when closing
 		setPhase("idle");
-		setIsPrivateRepo(false);
-		setCredentialId("");
 		setSessionId("");
 		setBranches([]);
 		setCurrentBranch("");
@@ -201,69 +183,6 @@ export function SyncGithubSkillDialog({
 									className="font-mono text-sm"
 								/>
 							</TextField>
-
-							{/* ── Private repo toggle ── */}
-							<Checkbox
-								variant="secondary"
-								isSelected={isPrivateRepo}
-								isDisabled={phase !== "idle"}
-								onChange={(checked) => {
-									setIsPrivateRepo(checked);
-									if (!checked) setCredentialId("");
-								}}
-							>
-								<Checkbox.Control>
-									<Checkbox.Indicator />
-								</Checkbox.Control>
-								<Checkbox.Content>
-									<Label>{t("privateRepo")}</Label>
-								</Checkbox.Content>
-							</Checkbox>
-
-							{/* ── Credential selector (shown when private) ── */}
-							{isPrivateRepo && (
-								<Select
-									className="w-full"
-									variant="secondary"
-									selectedKey={credentialId || undefined}
-									isDisabled={phase !== "idle"}
-									onSelectionChange={(key) => {
-										if (key === ADD_TOKEN_SENTINEL) {
-											setIsAddTokenOpen(true);
-											return;
-										}
-										setCredentialId(String(key));
-									}}
-								>
-									<Label>{t("selectCredential")}</Label>
-									<Select.Trigger>
-										<Select.Value />
-										<Select.Indicator />
-									</Select.Trigger>
-									<Select.Popover>
-										<ListBox>
-											{credentials.map((cred) => (
-												<ListBox.Item
-													key={cred.id}
-													id={cred.id}
-													textValue={cred.name}
-												>
-													{cred.name}
-													<ListBox.ItemIndicator />
-												</ListBox.Item>
-											))}
-											<ListBox.Section className="mt-1 border-t border-border pt-1">
-												<ListBox.Item
-													id={ADD_TOKEN_SENTINEL}
-													textValue={t("addToken")}
-												>
-													{t("addToken")}
-												</ListBox.Item>
-											</ListBox.Section>
-										</ListBox>
-									</Select.Popover>
-								</Select>
-							)}
 
 							{/* ── Scan error ── */}
 							{scanError && (
@@ -426,10 +345,7 @@ export function SyncGithubSkillDialog({
 							{phase === "idle" ? (
 								<Button
 									onPress={handleScan}
-									isDisabled={
-										scanMutation.isPending ||
-										(isPrivateRepo && !credentialId)
-									}
+									isDisabled={scanMutation.isPending}
 								>
 									{t("scanRepo")}
 								</Button>
@@ -528,14 +444,6 @@ export function SyncGithubSkillDialog({
 					</Modal.Dialog>
 				</Modal.Container>
 			</Modal.Backdrop>
-
-			<CreateCredentialDialog
-				isOpen={isAddTokenOpen}
-				onClose={() => setIsAddTokenOpen(false)}
-				onSuccess={(newId) => {
-					if (newId) setCredentialId(newId);
-				}}
-			/>
 		</>
 	);
 }

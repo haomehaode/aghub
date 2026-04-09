@@ -8,8 +8,6 @@ pub struct GitCloneSession {
 	pub created_at: Instant,
 	/// The original clone URL (without credentials).
 	pub url: String,
-	/// Resolved credential token, if any.
-	pub credential_token: Option<String>,
 	/// Cached list of remote branch names.
 	pub branches: Vec<String>,
 	/// The branch currently checked out in this session.
