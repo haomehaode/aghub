@@ -3,13 +3,14 @@ use aghub_core::{
 	errors::ConfigError,
 	load_all_agents,
 	models::{AgentType, ResourceScope, Skill},
-	registry, transfer,
+	registry, suppress_child_console, transfer,
 };
 use rocket::http::Status;
 use rocket::response::status::NoContent;
 use rocket::serde::json::Json;
 use skill::sanitize::sanitize_name;
 use std::collections::HashMap;
+use std::path::Path;
 
 use crate::{
 	dto::integrations::{
@@ -330,27 +331,49 @@ fn install_git_skill_to_dir(
 	Ok(())
 }
 
-fn install_local_git_skill(
+/// Map skills.sh registry `source` (e.g. `github/org/repo` or `github/org/repo/subpath`) to a
+/// GitHub repo URL for `git clone`. Uses the first two path segments as `owner/repo`; extra
+/// segments are paths inside the repo (scan still finds skills). Installs use each agent adapter's
+/// `target_skills_dir` (Cursor → `.cursor/skills`, not `npx skills add` → `.agents`).
+fn clone_url_for_skills_registry_source(source: &str) -> Option<String> {
+	let s = source.trim();
+	if s.is_empty() {
+		return None;
+	}
+	if s.starts_with("https://") || s.starts_with("http://") {
+		return Some(if s.ends_with(".git") {
+			s.to_string()
+		} else {
+			format!("{s}.git")
+		});
+	}
+	if s.starts_with("git@") || s.starts_with("ssh://") {
+		return Some(s.to_string());
+	}
+	if let Some(rest) = s.strip_prefix("github/") {
+		let parts: Vec<&str> = rest.split('/').filter(|p| !p.is_empty()).collect();
+		if parts.len() >= 2 {
+			return Some(format!(
+				"https://github.com/{}/{}.git",
+				parts[0], parts[1]
+			));
+		}
+		return None;
+	}
+	let parts: Vec<&str> = s.split('/').filter(|p| !p.is_empty()).collect();
+	if parts.len() >= 2 {
+		return Some(format!(
+			"https://github.com/{}/{}.git",
+			parts[0], parts[1]
+		));
+	}
+	None
+}
+
+fn install_skills_from_repo_root(
 	req: &InstallSkillRequest,
+	repo_root: &Path,
 ) -> Result<InstallSkillResponse, ApiError> {
-	let repo_url = req
-		.local_repo_git_url
-		.as_ref()
-		.map(|s| s.trim())
-		.filter(|s| !s.is_empty())
-		.map(str::to_string)
-		.ok_or_else(|| {
-			ApiError::new(
-				Status::BadRequest,
-				"Missing Internal skills repository URL. Set it in Settings > Integrations."
-					.to_string(),
-				"LOCAL_SKILLS_GIT_URL_NOT_SET",
-			)
-		})?;
-
-	let temp_dir = clone_internal_repo(&repo_url)?;
-	let repo_root = temp_dir.path().to_path_buf();
-
 	let resource_scope = match req.scope.as_str() {
 		"global" => ResourceScope::GlobalOnly,
 		"project" => ResourceScope::ProjectOnly,
@@ -402,7 +425,7 @@ fn install_local_git_skill(
 		};
 
 		let skill_paths =
-			skill::scan::scan_skills(&repo_root, scan_options, vec![]).map_err(
+			skill::scan::scan_skills(repo_root, scan_options, vec![]).map_err(
 				|e| {
 					ApiError::new(
 						Status::InternalServerError,
@@ -504,6 +527,28 @@ fn install_local_git_skill(
 		stderr,
 		exit_code: if had_error { 1 } else { 0 },
 	})
+}
+
+fn install_local_git_skill(
+	req: &InstallSkillRequest,
+) -> Result<InstallSkillResponse, ApiError> {
+	let repo_url = req
+		.local_repo_git_url
+		.as_ref()
+		.map(|s| s.trim())
+		.filter(|s| !s.is_empty())
+		.map(str::to_string)
+		.ok_or_else(|| {
+			ApiError::new(
+				Status::BadRequest,
+				"Missing Internal skills repository URL. Set it in Settings > Integrations."
+					.to_string(),
+				"LOCAL_SKILLS_GIT_URL_NOT_SET",
+			)
+		})?;
+
+	let temp_dir = clone_internal_repo(&repo_url)?;
+	install_skills_from_repo_root(req, temp_dir.path())
 }
 
 type GitInstallAgentGroup = Vec<(String, AgentType)>;
@@ -864,6 +909,24 @@ pub async fn install_skill(
 		return Ok(Json(response));
 	}
 
+	// skills.sh (and similar): clone + copy into each agent's canonical dir — matches Cursor
+	// `.cursor/skills` instead of `npx skills add` writing under `.agents`.
+	if let Some(url) = clone_url_for_skills_registry_source(&req.source) {
+		let response = tokio::task::spawn_blocking(move || {
+			let temp_dir = clone_internal_repo(&url)?;
+			install_skills_from_repo_root(&req, temp_dir.path())
+		})
+		.await
+		.map_err(|e| {
+			ApiError::new(
+				Status::InternalServerError,
+				format!("skills registry install task panicked: {e}"),
+				"REGISTRY_INSTALL_TASK_FAILED",
+			)
+		})??;
+		return Ok(Json(response));
+	}
+
 	#[cfg(target_os = "windows")]
 	let npx_cmd = "npx.cmd";
 	#[cfg(not(target_os = "windows"))]
@@ -898,6 +961,7 @@ pub async fn install_skill(
 		cmd.current_dir(path);
 	}
 
+	suppress_child_console(cmd.as_std_mut());
 	cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
 
 	let output = match timeout(Duration::from_secs(300), cmd.output()).await {
@@ -954,10 +1018,10 @@ pub async fn edit_skill_folder(
 
 	match detect_available_editor() {
 		Some(editor) => {
-			match std::process::Command::new(editor.cli_command())
-				.arg(&folder)
-				.spawn()
-			{
+			let mut cmd = std::process::Command::new(editor.cli_command());
+			cmd.arg(&folder);
+			suppress_child_console(&mut cmd);
+			match cmd.spawn() {
 				Ok(_) => Ok(()),
 				Err(e) => Err(format!("Failed to open editor: {e}")),
 			}
@@ -1188,11 +1252,11 @@ pub async fn git_scan_skills(
 
 /// Try to detect the checked-out branch from the cloned repo.
 fn detect_current_branch(repo_path: &std::path::Path) -> Option<String> {
-	let output = std::process::Command::new("git")
-		.args(["rev-parse", "--abbrev-ref", "HEAD"])
-		.current_dir(repo_path)
-		.output()
-		.ok()?;
+	let mut cmd = std::process::Command::new("git");
+	cmd.args(["rev-parse", "--abbrev-ref", "HEAD"])
+		.current_dir(repo_path);
+	suppress_child_console(&mut cmd);
+	let output = cmd.output().ok()?;
 
 	if !output.status.success() {
 		return None;
@@ -1493,5 +1557,20 @@ mod tests {
 		assert_eq!(error.status, Status::BadRequest);
 		assert_eq!(error.body.code, "BRANCHES_ERROR");
 		assert!(error.body.error.contains("Failed to list remote branches"));
+	}
+
+	#[test]
+	fn clone_url_github_uses_first_two_segments_as_repo() {
+		assert_eq!(
+			super::clone_url_for_skills_registry_source(
+				"github/remotion-dev/skills/remotion-best-practices",
+			)
+			.as_deref(),
+			Some("https://github.com/remotion-dev/skills.git")
+		);
+		assert_eq!(
+			super::clone_url_for_skills_registry_source("github/foo/bar").as_deref(),
+			Some("https://github.com/foo/bar.git")
+		);
 	}
 }

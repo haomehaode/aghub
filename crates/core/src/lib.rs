@@ -4,6 +4,7 @@
 
 pub mod adapter;
 pub mod adapters;
+pub mod process;
 pub mod all_agents;
 pub mod availability;
 pub mod manager;
@@ -24,6 +25,7 @@ pub use aghub_agents::{
 pub mod testing;
 
 pub use adapters::{create_adapter, AgentAdapter};
+pub use process::suppress_child_console;
 pub use all_agents::{load_all_agents, AgentResources};
 pub use manager::ConfigManager;
 pub use transfer::{

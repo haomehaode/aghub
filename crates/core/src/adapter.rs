@@ -9,6 +9,8 @@ use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use crate::process::suppress_child_console;
+
 thread_local! {
 	static SKILLS_PATH_OVERRIDE: RefCell<Option<(String, PathBuf)>> = const { RefCell::new(None) };
 	static MCP_PATH_OVERRIDE: RefCell<Option<(String, PathBuf)>> = const { RefCell::new(None) };
@@ -235,6 +237,7 @@ impl AgentAdapter for &'static AgentDescriptor {
 		if let Some(config_path) = config_path {
 			cmd.arg(config_path);
 		}
+		suppress_child_console(&mut cmd);
 		cmd
 	}
 

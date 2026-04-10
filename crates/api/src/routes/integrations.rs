@@ -1,5 +1,6 @@
 use std::process::Command;
 
+use aghub_core::suppress_child_console;
 use rocket::serde::json::Json;
 
 use crate::dto::integrations::{
@@ -23,9 +24,10 @@ pub async fn open_with_editor(
 	let detected_path = ToolInfoDto::from(&req.editor).path;
 	let cmd = detected_path.unwrap_or_else(|| req.editor.cli_command().to_string());
 
-	match Command::new(&cmd)
-		.arg(&req.path)
-		.spawn()
+	let mut child = Command::new(&cmd);
+	child.arg(&req.path);
+	suppress_child_console(&mut child);
+	match child.spawn()
 	{
 		Ok(_) => Ok(()),
 		Err(e) => Err(format!(

@@ -7,6 +7,8 @@ use rocket::serde::json::Json;
 use skill::{parse_skill_dir, sanitize_name, scan_skills, ScanOptions};
 use skills_sh::{summary, Client, SearchParams};
 
+use aghub_core::suppress_child_console;
+
 use crate::dto::market::{MarketSkill, MarketSkillSummary};
 use crate::error::ApiError;
 use tempfile::TempDir;
@@ -32,6 +34,7 @@ pub(crate) fn clone_git_repo_shallow(
 		cmd.args(["--branch", b]);
 	}
 	cmd.arg(repo_url).arg(temp_dir.path());
+	suppress_child_console(&mut cmd);
 	let status = cmd.status().map_err(|e| {
 		ApiError::new(
 			Status::BadGateway,
@@ -55,10 +58,10 @@ pub(crate) fn clone_internal_repo(repo_url: &str) -> Result<TempDir, ApiError> {
 
 /// Remote branch names via `git ls-remote --heads` (uses system Git auth).
 pub(crate) fn git_list_remote_heads(url: &str) -> Result<Vec<String>, String> {
-	let output = std::process::Command::new("git")
-		.args(["ls-remote", "--heads", url])
-		.output()
-		.map_err(|e| e.to_string())?;
+	let mut cmd = std::process::Command::new("git");
+	cmd.args(["ls-remote", "--heads", url]);
+	suppress_child_console(&mut cmd);
+	let output = cmd.output().map_err(|e| e.to_string())?;
 	if !output.status.success() {
 		let err = String::from_utf8_lossy(&output.stderr);
 		return Err(if err.trim().is_empty() {
