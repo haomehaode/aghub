@@ -328,6 +328,7 @@ fn run_claude_blocking(
 	for exe in &candidates {
 		let mut cmd = Command::new(exe);
 		cmd.current_dir(&project_path);
+		apply_claude_env_defaults(&mut cmd);
 		// Match IDE extension: respect ~/.claude and project `.claude/`.
 		cmd.arg("--setting-sources").arg("user,project");
 		cmd.arg("--permission-mode").arg(&perm);
@@ -358,6 +359,98 @@ Install it from Anthropic, or set AGHUB_CLAUDE_BIN to the full path \
 Desktop apps often see a shorter PATH than your terminal.",
 		tried.join(", ")
 	))
+}
+
+fn apply_claude_env_defaults(cmd: &mut Command) {
+	let home = std::env::var_os("HOME").map(PathBuf::from).or_else(|| {
+		#[cfg(target_os = "macos")]
+		{
+			std::env::var_os("USER")
+				.map(PathBuf::from)
+				.map(|u| PathBuf::from("/Users").join(u))
+		}
+		#[cfg(not(target_os = "macos"))]
+		{
+			None
+		}
+	});
+	if let Some(home) = home {
+		cmd.env("HOME", home.as_os_str());
+		if std::env::var_os("XDG_CONFIG_HOME").is_none() {
+			cmd.env("XDG_CONFIG_HOME", home.join(".config"));
+		}
+		apply_claude_auth_from_zshrc(cmd, &home);
+	}
+
+	#[cfg(target_os = "macos")]
+	{
+		let existing = std::env::var("PATH").unwrap_or_default();
+		let extra = ["/opt/homebrew/bin", "/usr/local/bin"];
+		let mut merged = String::new();
+		for p in extra {
+			if !existing.split(':').any(|item| item == p) {
+				if !merged.is_empty() {
+					merged.push(':');
+				}
+				merged.push_str(p);
+			}
+		}
+		if !existing.is_empty() {
+			if !merged.is_empty() {
+				merged.push(':');
+			}
+			merged.push_str(&existing);
+		}
+		if merged.is_empty() {
+			merged = "/usr/bin:/bin:/usr/sbin:/sbin".to_string();
+		}
+		cmd.env("PATH", merged);
+	}
+
+}
+
+fn apply_claude_auth_from_zshrc(cmd: &mut Command, home: &Path) {
+	let zshrc = home.join(".zshrc");
+	let Ok(content) = fs::read_to_string(zshrc) else {
+		return;
+	};
+
+	for key in [
+		"ANTHROPIC_BASE_URL",
+		"ANTHROPIC_API_KEY",
+		"ANTHROPIC_AUTH_TOKEN",
+	] {
+		if std::env::var_os(key).is_some() {
+			continue;
+		}
+		if let Some(value) = parse_export_value(&content, key) {
+			if key == "ANTHROPIC_API_KEY" && value.trim().is_empty() {
+				continue;
+			}
+			cmd.env(key, value);
+		}
+	}
+}
+
+fn parse_export_value(content: &str, key: &str) -> Option<String> {
+	let prefix = format!("export {key}=");
+	for line in content.lines() {
+		let trimmed = line.trim();
+		if !trimmed.starts_with(&prefix) {
+			continue;
+		}
+		let raw = trimmed[prefix.len()..].trim();
+		if raw.is_empty() {
+			return Some(String::new());
+		}
+		let unquoted = raw
+			.strip_prefix('"')
+			.and_then(|s| s.strip_suffix('"'))
+			.or_else(|| raw.strip_prefix('\'').and_then(|s| s.strip_suffix('\'')))
+			.unwrap_or(raw);
+		return Some(unquoted.to_string());
+	}
+	None
 }
 
 #[tauri::command]
