@@ -523,7 +523,13 @@ export default {
 	workspaceFilesCollapseAll: "Collapse all folders",
 	workspaceFilesPickFile: "File preview",
 	workspaceFilesPickFileHint:
-		"Select a text file in the list to preview it (decoded as UTF-8).",
+		"Select a file in the list: text is shown as UTF-8; supported " +
+		"images (PNG, JPEG, GIF, WebP, BMP, ICO, SVG) open in the preview.",
+	workspaceFilesPreviewImageTooLarge:
+		"Image is too large to preview in the app (max {{maxMb}} MB). " +
+		"Open it in an external viewer.",
+	workspaceFilesPreviewNotImage:
+		"This file could not be loaded as a preview image.",
 	workspaceFilesEmptyFolder: "(empty)",
 	workspaceClaudeRunning: "Claude Code is running…",
 	workspaceClaudeSend: "Send to Claude Code",

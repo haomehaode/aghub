@@ -3,7 +3,8 @@ use crate::commands::{
 	workspace::{
 		workspace_git_commit, workspace_git_diff, workspace_git_status,
 		workspace_list_project_entries, workspace_read_project_file,
-		workspace_read_text_file, workspace_run_claude_code,
+		workspace_read_project_image, workspace_read_text_file,
+		workspace_run_claude_code,
 	},
 };
 use log::info;
@@ -136,6 +137,7 @@ pub fn run() {
 			workspace_run_claude_code,
 			workspace_list_project_entries,
 			workspace_read_project_file,
+			workspace_read_project_image,
 			workspace_read_text_file,
 		])
 		.run(tauri::generate_context!())

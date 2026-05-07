@@ -215,6 +215,33 @@ function isReaderStylePath(rel: string): boolean {
 	return /\.(md|mdx|markdown|txt|rst)$/i.test(rel);
 }
 
+const WORKSPACE_PREVIEW_IMAGE_MAX_MB = 20;
+
+function isWorkspaceImagePreviewPath(rel: string): boolean {
+	return /\.(png|jpe?g|gif|webp|bmp|dib|ico|svg)$/i.test(rel);
+}
+
+type WorkspaceProjectImagePayload = {
+	mimeType: string;
+	dataBase64: string;
+};
+
+function workspacePreviewImageErrorMessage(
+	err: unknown,
+	t: (key: string, opts?: { maxMb?: number }) => string,
+): string {
+	const msg = err instanceof Error ? err.message : String(err);
+	if (msg === "WORKSPACE_PREVIEW_IMAGE_TOO_LARGE") {
+		return t("workspaceFilesPreviewImageTooLarge", {
+			maxMb: WORKSPACE_PREVIEW_IMAGE_MAX_MB,
+		});
+	}
+	if (msg === "WORKSPACE_PREVIEW_NOT_IMAGE") {
+		return t("workspaceFilesPreviewNotImage");
+	}
+	return msg;
+}
+
 interface ProjectWorkspacePanelProps {
 	projectPath: string;
 }
@@ -364,6 +391,9 @@ export function ProjectWorkspacePanel({
 			});
 			queryClient.invalidateQueries({
 				queryKey: ["workspace-file", projectPath],
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["workspace-file-image", projectPath],
 			});
 			setChatStore((store) => {
 				if (!store) return store;
@@ -521,7 +551,26 @@ export function ProjectWorkspacePanel({
 				projectPath,
 				relativePath: selectedFileRel!,
 			}),
-		enabled: workspaceTab === "files" && Boolean(selectedFileRel),
+		enabled:
+			workspaceTab === "files" &&
+			Boolean(selectedFileRel) &&
+			!isWorkspaceImagePreviewPath(selectedFileRel ?? ""),
+	});
+
+	const fileImageQuery = useQuery({
+		queryKey: ["workspace-file-image", projectPath, selectedFileRel],
+		queryFn: () =>
+			invoke<WorkspaceProjectImagePayload>(
+				"workspace_read_project_image",
+				{
+					projectPath,
+					relativePath: selectedFileRel!,
+				},
+			),
+		enabled:
+			workspaceTab === "files" &&
+			Boolean(selectedFileRel) &&
+			isWorkspaceImagePreviewPath(selectedFileRel ?? ""),
 	});
 
 	const sendClaude = useCallback(() => {
@@ -1365,6 +1414,54 @@ export function ProjectWorkspacePanel({
 										>
 											{t("workspaceFilesPickFileHint")}
 										</p>
+									) : selectedFileRel &&
+										isWorkspaceImagePreviewPath(
+											selectedFileRel,
+										) ? (
+										fileImageQuery.isLoading ? (
+											<div
+												className={cn(
+													"flex flex-1 justify-center",
+													"py-12",
+												)}
+											>
+												<Spinner />
+											</div>
+										) : fileImageQuery.isError ? (
+											<p
+												className={cn(
+													"text-danger px-2 py-2 text-sm",
+												)}
+											>
+												{workspacePreviewImageErrorMessage(
+													fileImageQuery.error,
+													t,
+												)}
+											</p>
+										) : (
+											<div
+												className={cn(
+													"flex min-h-0 flex-1",
+													"items-center justify-center",
+													"overflow-y-scroll",
+													"overscroll-contain p-4",
+													"[scrollbar-gutter:stable]",
+												)}
+											>
+												<img
+													src={`data:${fileImageQuery.data?.mimeType ?? ""};base64,${fileImageQuery.data?.dataBase64 ?? ""}`}
+													alt={
+														selectedFileBasename ??
+														""
+													}
+													className={cn(
+														"max-h-[min(100%,70vh)]",
+														"w-auto max-w-full",
+														"object-contain",
+													)}
+												/>
+											</div>
+										)
 									) : fileContentQuery.isLoading ? (
 										<div className="flex flex-1 justify-center py-12">
 											<Spinner />

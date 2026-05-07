@@ -503,7 +503,11 @@ export default {
 	workspaceFilesCollapseAll: "摺疊全部資料夾",
 	workspaceFilesPickFile: "檔案預覽",
 	workspaceFilesPickFileHint:
-		"在左側列表中點選文字檔即可預覽全文（以 UTF-8 解碼）。",
+		"在左側列表中點選檔案：文字以 UTF-8 顯示；可預覽 PNG、JPEG、" +
+		"GIF、WebP、BMP、ICO、SVG 等圖片。",
+	workspaceFilesPreviewImageTooLarge:
+		"圖片超過應用程式內預覽上限（{{maxMb}} MB），請在外部開啟。",
+	workspaceFilesPreviewNotImage: "無法將該檔案作為圖片預覽。",
 	workspaceFilesEmptyFolder: "（空資料夾）",
 	workspaceClaudeRunning: "Claude Code 執行中…",
 	workspaceClaudeSend: "傳送到 Claude Code",

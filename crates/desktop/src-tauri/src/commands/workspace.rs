@@ -1,10 +1,12 @@
-//! Local workspace helpers: Git CLI and Claude Code headless (`claude -p`).
+//! Local workspace helpers: Git CLI, Claude Code headless (`claude -p`),
+//! and UTF-8 or image previews under the project root.
 //! Runs with `cwd` set to the registered project directory.
 //! Uses `--permission-mode` (see Claude Code docs): default UI path uses
 //! `bypassPermissions` so Claude can read/write freely; `plan` is
 //! analysis-only. Sessions use `--session-id` / `-r` for multi-turn
 //! context. Override with env `AGHUB_CLAUDE_PERMISSION_MODE`.
 
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use serde::Serialize;
 use std::ffi::OsString;
 use std::fs;
@@ -12,8 +14,30 @@ use std::io;
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
 
+/// Windows only: suppress the flashing console window when spawning a CLI from
+/// the GUI (`CREATE_NO_WINDOW`).
+#[cfg(windows)]
+fn command_hide_console_windows(cmd: &mut Command) {
+	use std::os::windows::process::CommandExt;
+	const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+	cmd.creation_flags(CREATE_NO_WINDOW);
+}
+
+#[cfg(not(windows))]
+fn command_hide_console_windows(_cmd: &mut Command) {}
+
 /// Max directory entries returned by [`workspace_list_project_entries`].
 const MAX_LIST_ENTRIES: usize = 2000;
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceProjectImagePayload {
+	pub mime_type: String,
+	pub data_base64: String,
+}
+
+/// Max decoded image bytes for in-app preview (`data:` URLs).
+const MAX_IMAGE_PREVIEW_BYTES: u64 = 20 * 1024 * 1024;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct WorkspaceDirEntry {
@@ -166,8 +190,7 @@ persists)."
 		);
 	}
 	let hy = [8_usize, 13, 18, 23];
-	let is_hex =
-		|c: u8| matches!(c, b'0'..=b'9' | b'a'..=b'f' | b'A'..=b'F');
+	let is_hex = |c: u8| matches!(c, b'0'..=b'9' | b'a'..=b'f' | b'A'..=b'F');
 	for (i, &ch) in t.as_bytes().iter().enumerate() {
 		if hy.contains(&i) {
 			if ch != b'-' {
@@ -235,8 +258,7 @@ fn claude_append_print_flags(cmd: &mut Command) {
 	let verbose_on = match std::env::var("AGHUB_CLAUDE_VERBOSE") {
 		Ok(ref v) => {
 			let s = v.trim().to_lowercase();
-			!(s.is_empty()
-				|| s == "0" || s == "false" || s == "no")
+			!(s.is_empty() || s == "0" || s == "false" || s == "no")
 		}
 		Err(_) => true,
 	};
@@ -277,9 +299,9 @@ fn interpret_claude_output(
 			}
 		}
 		(true, false) => stderr,
-		(false, false) => format!(
-			"{stdout}\n\n--- Claude Code (stderr) ---\n{stderr}",
-		),
+		(false, false) => {
+			format!("{stdout}\n\n--- Claude Code (stderr) ---\n{stderr}",)
+		}
 	};
 
 	if merged.trim().is_empty() {
@@ -316,6 +338,7 @@ fn run_claude_blocking(
 		}
 		claude_append_print_flags(&mut cmd);
 		cmd.arg("-p").arg(&prompt);
+		command_hide_console_windows(&mut cmd);
 
 		match cmd.output() {
 			Ok(output) => return interpret_claude_output(output),
@@ -419,6 +442,45 @@ pub fn workspace_read_project_file(
 	let bytes = fs::read(&path).map_err(|e| e.to_string())?;
 	String::from_utf8(bytes)
 		.map_err(|_| "file is not valid UTF-8 (binary files not shown)".into())
+}
+
+fn image_mime_for_path(path: &Path) -> Option<&'static str> {
+	let ext = path.extension()?.to_str()?.to_lowercase();
+	match ext.as_str() {
+		"png" => Some("image/png"),
+		"jpg" | "jpeg" => Some("image/jpeg"),
+		"gif" => Some("image/gif"),
+		"webp" => Some("image/webp"),
+		"bmp" | "dib" => Some("image/bmp"),
+		"ico" => Some("image/x-icon"),
+		"svg" => Some("image/svg+xml"),
+		_ => None,
+	}
+}
+
+#[tauri::command]
+pub fn workspace_read_project_image(
+	project_path: String,
+	relative_path: String,
+) -> Result<WorkspaceProjectImagePayload, String> {
+	let root = PathBuf::from(project_path);
+	let path = resolve_under_project(&root, &relative_path)?;
+	if !path.is_file() {
+		return Err("not a file".into());
+	}
+	let Some(mime) = image_mime_for_path(&path) else {
+		return Err("WORKSPACE_PREVIEW_NOT_IMAGE".into());
+	};
+	let meta = path.metadata().map_err(|e| e.to_string())?;
+	if meta.len() > MAX_IMAGE_PREVIEW_BYTES {
+		return Err("WORKSPACE_PREVIEW_IMAGE_TOO_LARGE".into());
+	}
+	let bytes = fs::read(&path).map_err(|e| e.to_string())?;
+	let data_base64 = STANDARD.encode(&bytes);
+	Ok(WorkspaceProjectImagePayload {
+		mime_type: mime.to_string(),
+		data_base64,
+	})
 }
 
 /// Read a UTF-8 text file from an absolute path (e.g. user-picked via dialog).
