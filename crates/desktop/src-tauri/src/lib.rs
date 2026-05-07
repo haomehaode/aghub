@@ -1,4 +1,11 @@
-use crate::commands::start_server;
+use crate::commands::{
+	start_server,
+	workspace::{
+		workspace_git_commit, workspace_git_diff, workspace_git_status,
+		workspace_list_project_entries, workspace_read_project_file,
+		workspace_read_text_file, workspace_run_claude_code,
+	},
+};
 use log::info;
 use tauri::{Manager, WebviewWindow};
 use tauri_plugin_log::fern::colors::{Color, ColoredLevelConfig};
@@ -121,7 +128,16 @@ pub fn run() {
 			info!("aghub desktop setup completed");
 			Ok(())
 		})
-		.invoke_handler(tauri::generate_handler![start_server])
+		.invoke_handler(tauri::generate_handler![
+			start_server,
+			workspace_git_status,
+			workspace_git_diff,
+			workspace_git_commit,
+			workspace_run_claude_code,
+			workspace_list_project_entries,
+			workspace_read_project_file,
+			workspace_read_text_file,
+		])
 		.run(tauri::generate_context!())
 		.expect("error while running tauri application");
 }

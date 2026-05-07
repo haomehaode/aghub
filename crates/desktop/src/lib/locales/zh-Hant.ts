@@ -146,6 +146,9 @@ export default {
 	onboardingProjectBulkTitle: "批次清理已經內建好了",
 	onboardingProjectBulkDescription:
 		"當你需要一次刪除多個專案資源時，開啟多選模式會比逐個清理有效率得多。",
+	onboardingProjectWorkspaceTitle: "工作台：檔案與對話",
+	onboardingProjectWorkspaceDescription:
+		"在「檔案」裡瀏覽儲存庫並預覽文字。切換到「對話」可在該目錄下使用 Claude Code。",
 
 	// Agent Management
 	agentManagementDescription:
@@ -477,6 +480,40 @@ export default {
 	noResourcesMatch: "沒有符合的資源",
 	noProjectResources: "此專案中沒有資源",
 	selectResourceToView: "選擇一個資源檢視詳情",
+
+	// Project workspace (Claude Code)
+	workspaceTabsAria: "檔案與對話",
+	workspaceTabChat: "對話",
+	workspaceTabFiles: "檔案",
+	workspaceChatHistory: "對話紀錄",
+	workspaceChatNewSession: "新對話",
+	workspaceChatDeleteSession: "刪除對話",
+	workspaceComposerPlaceholderFocus:
+		"Ctrl+Esc 聚焦或取消聚焦 Claude Code",
+	workspaceComposerAttachFile: "上傳檔案到 Claude Code",
+	workspaceComposerAttachOk: "已附加 {{count}} 個檔案",
+	workspaceComposerAttachedMarker: "附加檔案：{{name}}",
+	workspaceComposerModeAskBeforeEdits: "智慧體模式（完全讀寫）",
+	workspaceComposerModePlanMenu: "規劃模式",
+	workspaceComposerModeMenu: "Claude 模式",
+	workspaceComposerPlanPrefix:
+		"請先列出簡短的步驟計畫，再執行具體變更。",
+	workspaceFilesTitle: "專案檔案",
+	workspaceFilesRefresh: "重新整理",
+	workspaceFilesCollapseAll: "摺疊全部資料夾",
+	workspaceFilesPickFile: "檔案預覽",
+	workspaceFilesPickFileHint:
+		"在左側列表中點選文字檔即可預覽全文（以 UTF-8 解碼）。",
+	workspaceFilesEmptyFolder: "（空資料夾）",
+	workspaceClaudeRunning: "Claude Code 執行中…",
+	workspaceClaudeSend: "傳送到 Claude Code",
+	workspaceClaudeErrorPrefix: "Claude Code 錯誤",
+	workspaceClaudeNoCliOutput:
+		"Claude Code 已結束（結束代碼 0），但終端沒有可顯示的文字輸出。" +
+		"專案檔案可能已被變更，請到「檔案」檢視。" +
+		"若經常發生：請更新本機 `claude` CLI；本應用會附加 " +
+		"`--output-format text` 與 `--verbose`（可用環境變數 " +
+		"AGHUB_CLAUDE_VERBOSE=0 關閉 verbose）。",
 
 	// Skill Detail
 	searchOnSkillsSh: "在 skills.sh 中搜尋",

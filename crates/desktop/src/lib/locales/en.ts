@@ -151,6 +151,9 @@ export default {
 	onboardingProjectBulkTitle: "Batch cleanup is built in",
 	onboardingProjectBulkDescription:
 		"Turn on multi-select when you want to remove several project resources in one pass instead of cleaning them up one by one.",
+	onboardingProjectWorkspaceTitle: "Workbench: files & chat",
+	onboardingProjectWorkspaceDescription:
+		"Use the Files tab to browse the repo and preview text files. Switch to Chat to talk to Claude Code in this folder.",
 
 	// Agent Management
 	agentManagementDescription:
@@ -496,6 +499,41 @@ export default {
 	noResourcesMatch: "No resources match",
 	noProjectResources: "No resources in this project",
 	selectResourceToView: "Select a resource to view details",
+
+	// Project workspace (Claude Code)
+	workspaceTabsAria: "Files and chat",
+	workspaceTabChat: "Chat",
+	workspaceTabFiles: "Files",
+	workspaceChatHistory: "Chat history",
+	workspaceChatNewSession: "New chat",
+	workspaceChatDeleteSession: "Delete chat",
+	workspaceComposerPlaceholderFocus:
+		"Ctrl+Esc to focus or unfocus Claude Code",
+	workspaceComposerAttachFile: "Attach files for Claude Code",
+	workspaceComposerAttachOk: "Attached {{count}} file(s)",
+	workspaceComposerAttachedMarker: "attached file: {{name}}",
+	workspaceComposerModeAskBeforeEdits:
+		"Agent mode (full read/write)",
+	workspaceComposerModePlanMenu: "Plan mode",
+	workspaceComposerModeMenu: "Claude mode",
+	workspaceComposerPlanPrefix:
+		"First outline a short step-by-step plan, then run the work.",
+	workspaceFilesTitle: "Project files",
+	workspaceFilesRefresh: "Refresh",
+	workspaceFilesCollapseAll: "Collapse all folders",
+	workspaceFilesPickFile: "File preview",
+	workspaceFilesPickFileHint:
+		"Select a text file in the list to preview it (decoded as UTF-8).",
+	workspaceFilesEmptyFolder: "(empty)",
+	workspaceClaudeRunning: "Claude Code is running…",
+	workspaceClaudeSend: "Send to Claude Code",
+	workspaceClaudeErrorPrefix: "Claude Code error",
+	workspaceClaudeNoCliOutput:
+		"Claude Code finished without printing any text (exit 0). " +
+		"The project may still have been changed—check the Files tab. " +
+		"If this keeps happening, update the `claude` CLI; we also pass " +
+		"`--output-format text` and `--verbose` (disable verbose with " +
+		"env AGHUB_CLAUDE_VERBOSE=0).",
 
 	// Skill Detail
 	searchOnSkillsSh: "Search on skills.sh",

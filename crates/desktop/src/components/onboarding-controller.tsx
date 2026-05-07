@@ -119,7 +119,7 @@ export function OnboardingController() {
 
 		const projectRoot = await ensureRoute(
 			`/projects/${targetProjectId}`,
-			'[data-tour="project-resources"]',
+			'[data-tour="project-workspace"]',
 		);
 
 		if (!projectRoot) {
@@ -137,48 +137,12 @@ export function OnboardingController() {
 
 		const steps: DriveStep[] = [
 			{
-				element: '[data-tour="project-resources"]',
+				element: '[data-tour="project-workspace"]',
 				popover: {
-					title: t("onboardingProjectResourcesTitle"),
-					description: t("onboardingProjectResourcesDescription"),
-					side: "right",
-					align: "start",
-				},
-			},
-			{
-				element: '[data-tour="project-search"]',
-				popover: {
-					title: t("onboardingProjectSearchTitle"),
-					description: t("onboardingProjectSearchDescription"),
-					side: "right",
-					align: "start",
-				},
-			},
-			{
-				element: '[data-tour="project-add-resource"]',
-				popover: {
-					title: t("onboardingProjectAddTitle"),
-					description: t("onboardingProjectAddDescription"),
-					side: "bottom",
-					align: "end",
-				},
-			},
-			{
-				element: '[data-tour="project-detail-panel"]',
-				popover: {
-					title: t("onboardingProjectDetailTitle"),
-					description: t("onboardingProjectDetailDescription"),
+					title: t("onboardingProjectWorkspaceTitle"),
+					description: t("onboardingProjectWorkspaceDescription"),
 					side: "left",
 					align: "start",
-				},
-			},
-			{
-				element: '[data-tour="project-multi-select"]',
-				popover: {
-					title: t("onboardingProjectBulkTitle"),
-					description: t("onboardingProjectBulkDescription"),
-					side: "bottom",
-					align: "end",
 					doneBtnText: t("onboardingFinish"),
 					onNextClick: (_element: any, _step: any, opts: any) => {
 						finishProjectTour();
